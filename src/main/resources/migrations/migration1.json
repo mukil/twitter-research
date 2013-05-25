@@ -1,0 +1,718 @@
+{
+    "topic_types": [
+        {
+            "value": "Twitter Search Query",
+            "uri": "org.deepamehta.twitter.search_query",
+            "data_type_uri": "dm4.core.text",
+            "index_mode_uris": [
+                "dm4.core.fulltext",
+                "dm4.core.key"
+            ],
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "composite": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false,
+                        "dm4.webclient.rows": 1,
+                        "dm4.webclient.simple_renderer_uri": "org.deepamehta.twitter.search_field"
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Search Timestamp",
+            "uri": "org.deepamehta.twitter.last_search_time",
+            "data_type_uri": "dm4.core.number",
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "composite": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false,
+                        "dm4.webclient.simple_renderer_uri": "org.deepamehta.twitter.search_timestamp_field"
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Max. Number of Search Results (0-100)",
+            "uri": "org.deepamehta.twitter.query_size",
+            "data_type_uri": "dm4.core.number",
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "composite": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false,
+                        "dm4.webclient.input_field_rows": 1,
+                        "dm4.webclient.simple_renderer_uri": "org.deepamehta.twitter.search_query_size_field"
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Search Tweets in Language (ISO-Code)",
+            "uri": "org.deepamehta.twitter.search_language",
+            "data_type_uri": "dm4.core.text",
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "composite": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false,
+                        "dm4.webclient.input_field_rows": 1,
+                        "dm4.webclient.simple_renderer_uri" : "org.deepamehta.twitter.search_lang_field"
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Search tweets near location (Lat, Lng, Radius)",
+            "uri": "org.deepamehta.twitter.search_location",
+            "data_type_uri": "dm4.core.text",
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "composite": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false,
+                        "dm4.webclient.input_field_rows": 1,
+                        "dm4.webclient.simple_renderer_uri": "org.deepamehta.twitter.search_location_field"
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Search Result Type (Recent, Mixed, Popular)",
+            "uri": "org.deepamehta.twitter.search_result_type",
+            "data_type_uri": "dm4.core.text",
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "composite": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false,
+                        "dm4.webclient.input_field_rows": 1,
+                        "dm4.webclient.simple_renderer_uri": "org.deepamehta.twitter.search_type_field"
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Next Search Page",
+            "uri": "org.deepamehta.twitter.search_next_page",
+            "data_type_uri": "dm4.core.text",
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "composite": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false,
+                        "dm4.webclient.input_field_rows": 1,
+                        "dm4.webclient.simple_renderer_uri": "org.deepamehta.twitter.search_next_field"
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Refresh Search URL",
+            "uri": "org.deepamehta.twitter.search_refresh_url",
+            "data_type_uri": "dm4.core.text",
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "composite": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false,
+                        "dm4.webclient.input_field_rows": 1,
+                        "dm4.webclient.simple_renderer_uri": "org.deepamehta.twitter.search_refresh_field"
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Max. Tweet ID",
+            "uri": "org.deepamehta.twitter.search_last_tweet_id",
+            "data_type_uri": "dm4.core.text",
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "composite": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false,
+                        "dm4.webclient.input_field_rows": 1,
+                        "dm4.webclient.simple_renderer_uri": "org.deepamehta.twitter.search_max_tweet_id_field"
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Search Result Size",
+            "uri": "org.deepamehta.twitter.search_result_size",
+            "data_type_uri": "dm4.core.number",
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "composite": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false,
+                        "dm4.webclient.input_field_rows": 1,
+                        "dm4.webclient.simple_renderer_uri": "org.deepamehta.twitter.search_result_size_field"
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Twitter User Name",
+            "uri": "org.deepamehta.twitter.user_name",
+            "data_type_uri": "dm4.core.text",
+            "index_mode_uris": [
+                "dm4.core.fulltext",
+                "dm4.core.key"
+            ],
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "composite": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false,
+                        "dm4.webclient.input_field_rows": 1,
+                        "dm4.webclient.simple_renderer_uri": "org.deepamehta.twitter.user_name_field"
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Twitter User Image",
+            "uri": "org.deepamehta.twitter.user_image_url",
+            "data_type_uri": "dm4.core.text",
+            "index_mode_uris": [
+                "dm4.core.fulltext",
+                "dm4.core.key"
+            ],
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "composite": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false,
+                        "dm4.webclient.input_field_rows": 1,
+                        "dm4.webclient.simple_renderer_uri": "org.deepamehta.twitter.user_image_field"
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Twitter User ID",
+            "uri": "org.deepamehta.twitter.user_id",
+            "data_type_uri": "dm4.core.text",
+            "index_mode_uris": [
+                "dm4.core.fulltext",
+                "dm4.core.key"
+            ],
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "composite": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false,
+                        "dm4.webclient.input_field_rows": 1,
+                        "dm4.webclient.simple_renderer_uri": "org.deepamehta.twitter.user_id_field"
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Twitter User",
+            "uri": "org.deepamehta.twitter.user",
+            "data_type_uri": "dm4.core.composite",
+            "assoc_defs": [
+                {
+                    "child_type_uri": "org.deepamehta.twitter.user_name",
+                    "child_cardinality_uri": "dm4.core.one",
+                    "assoc_type_uri": "dm4.core.composition_def"
+                },
+                {
+                    "child_type_uri": "org.deepamehta.twitter.user_image_url",
+                    "child_cardinality_uri": "dm4.core.one",
+                    "assoc_type_uri": "dm4.core.composition_def"
+                },
+                {
+                    "child_type_uri": "org.deepamehta.twitter.user_id",
+                    "child_cardinality_uri": "dm4.core.one",
+                    "assoc_type_uri": "dm4.core.composition_def"
+                }
+            ],
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "composite": {
+                        "dm4.webclient.icon": "/org.deepamehta.twitter-research/images/profile_icon_black_24.png",
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": true
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Tweet Timestamp",
+            "uri": "org.deepamehta.twitter.tweet_time",
+            "data_type_uri": "dm4.core.text",
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "composite": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Tweet Content",
+            "uri": "org.deepamehta.twitter.tweet_content",
+            "data_type_uri": "dm4.core.text",
+            "index_mode_uris": [
+                "dm4.core.fulltext"
+            ],
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "composite": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false,
+                        "dm4.webclient.input_field_rows": 1,
+                        "dm4.webclient.simple_renderer_uri": "org.deepamehta.twitter.tweet_renderer"
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Tweet Entities",
+            "uri": "org.deepamehta.twitter.tweet_entities",
+            "data_type_uri": "dm4.core.text",
+            "index_mode_uris": [
+                "dm4.core.fulltext"
+            ],
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "composite": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false,
+                        "dm4.webclient.input_field_rows": 1,
+                        "dm4.webclient.simple_renderer_uri": "org.deepamehta.twitter.tweet_entities_field"
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Tweet Metadata",
+            "uri": "org.deepamehta.twitter.tweet_metadata",
+            "data_type_uri": "dm4.core.text",
+            "index_mode_uris": [
+                "dm4.core.fulltext"
+            ],
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "composite": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false,
+                        "dm4.webclient.input_field_rows": 1,
+                        "dm4.webclient.simple_renderer_uri": "org.deepamehta.twitter.tweet_metadata_field"
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Tweet ID",
+            "uri": "org.deepamehta.twitter.tweet_id",
+            "data_type_uri": "dm4.core.text",
+            "index_mode_uris": [ "dm4.core.key" ],
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "composite": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false,
+                        "dm4.webclient.input_field_rows": 1,
+                        "dm4.webclient.simple_renderer_uri": "org.deepamehta.twitter.tweet_id_field"
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Tweeted To Status ID",
+            "uri": "org.deepamehta.twitter.tweeted_to_status_id",
+            "data_type_uri": "dm4.core.text",
+            "index_mode_uris": [ "dm4.core.key", "dm4.core.fulltext" ],
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "composite": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false,
+                        "dm4.webclient.input_field_rows": 1,
+                        "dm4.webclient.simple_renderer_uri": "org.deepamehta.twitter.tweeted_to_status_id_field"
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Tweet Geo Location",
+            "uri": "org.deepamehta.twitter.tweet_location",
+            "data_type_uri": "dm4.core.text",
+            "index_mode_uris": [
+                "dm4.core.fulltext",
+                "dm4.core.key"
+            ],
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "composite": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false,
+                        "dm4.webclient.input_field_rows": 1,
+                        "dm4.webclient.simple_renderer_uri": "org.deepamehta.twitter.tweet_location_field"
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Tweet Withheld in Countries",
+            "uri": "org.deepamehta.twitter.tweet_withheld_in",
+            "data_type_uri": "dm4.core.text",
+            "index_mode_uris": [
+                "dm4.core.fulltext",
+                "dm4.core.key"
+            ],
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "composite": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false,
+                        "dm4.webclient.input_field_rows": 1,
+                        "dm4.webclient.simple_renderer_uri": "org.deepamehta.twitter.tweet_withheld_in_field"
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Tweet Withheld Copyright (DMCA Request)",
+            "uri": "org.deepamehta.twitter.tweet_withheld_copyright",
+            "data_type_uri": "dm4.core.boolean",
+            "index_mode_uris": [ "dm4.core.key" ],
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "composite": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false,
+                        "dm4.webclient.input_field_rows": 1,
+                        "dm4.webclient.simple_renderer_uri": "org.deepamehta.twitter.tweet_withheld_copyright_field"
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Withheld Scope (Status or User)",
+            "uri": "org.deepamehta.twitter.tweet_withheld_scope",
+            "data_type_uri": "dm4.core.boolean",
+            "index_mode_uris": [ "dm4.core.key" ],
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "composite": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false,
+                        "dm4.webclient.input_field_rows": 1,
+                        "dm4.webclient.simple_renderer_uri": "org.deepamehta.twitter.tweet_withheld_scope_field"
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Tweet Favourite Count",
+            "uri": "org.deepamehta.twitter.tweet_favourite_count",
+            "data_type_uri": "dm4.core.number",
+            "index_mode_uris": [ "dm4.core.key" ],
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "composite": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false,
+                        "dm4.webclient.input_field_rows": 1,
+                        "dm4.webclient.simple_renderer_uri": "org.deepamehta.twitter.tweet_favourite_count_field"
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Tweet Source Button",
+            "uri": "org.deepamehta.twitter.tweet_source_button",
+            "data_type_uri": "dm4.core.text",
+            "index_mode_uris": [
+                "dm4.core.fulltext",
+                "dm4.core.key"
+            ],
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "composite": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false,
+                        "dm4.webclient.input_field_rows": 1,
+                        "dm4.webclient.simple_renderer_uri": "org.deepamehta.twitter.tweet_source_field"
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Tweet",
+            "uri": "org.deepamehta.twitter.tweet",
+            "data_type_uri": "dm4.core.composite",
+            "assoc_defs": [
+                {
+                    "child_type_uri": "org.deepamehta.twitter.tweet_time",
+                    "child_cardinality_uri": "dm4.core.one",
+                    "assoc_type_uri": "dm4.core.composition_def"
+                },
+                {
+                    "child_type_uri": "org.deepamehta.twitter.tweet_content",
+                    "child_cardinality_uri": "dm4.core.one",
+                    "assoc_type_uri": "dm4.core.composition_def"
+                },
+                {
+                    "child_type_uri": "org.deepamehta.twitter.tweet_entities",
+                    "child_cardinality_uri": "dm4.core.one",
+                    "assoc_type_uri": "dm4.core.composition_def"
+                },
+                {
+                    "child_type_uri": "org.deepamehta.twitter.tweet_metadata",
+                    "child_cardinality_uri": "dm4.core.one",
+                    "assoc_type_uri": "dm4.core.composition_def"
+                },
+                {
+                    "child_type_uri": "org.deepamehta.twitter.tweet_location",
+                    "child_cardinality_uri": "dm4.core.one",
+                    "assoc_type_uri": "dm4.core.composition_def"
+                },
+                {
+                    "child_type_uri": "org.deepamehta.twitter.tweet_favourite_count",
+                    "child_cardinality_uri": "dm4.core.one",
+                    "assoc_type_uri": "dm4.core.composition_def"
+                },
+                {
+                    "child_type_uri": "org.deepamehta.twitter.tweet_withheld_in",
+                    "child_cardinality_uri": "dm4.core.one",
+                    "assoc_type_uri": "dm4.core.composition_def"
+                },
+                {
+                    "child_type_uri": "org.deepamehta.twitter.tweet_withheld_copyright",
+                    "child_cardinality_uri": "dm4.core.one",
+                    "assoc_type_uri": "dm4.core.composition_def"
+                },
+                {
+                    "child_type_uri": "org.deepamehta.twitter.tweet_withheld_scope",
+                    "child_cardinality_uri": "dm4.core.one",
+                    "assoc_type_uri": "dm4.core.composition_def"
+                },
+                {
+                    "child_type_uri": "org.deepamehta.twitter.tweet_source_button",
+                    "child_cardinality_uri": "dm4.core.one",
+                    "assoc_type_uri": "dm4.core.composition_def"
+                },
+                {
+                    "child_type_uri": "org.deepamehta.twitter.tweet_id",
+                    "child_cardinality_uri": "dm4.core.one",
+                    "assoc_type_uri": "dm4.core.composition_def"
+                },
+                {
+                    "child_type_uri": "org.deepamehta.twitter.tweeted_to_status_id",
+                    "child_cardinality_uri": "dm4.core.one",
+                    "assoc_type_uri": "dm4.core.composition_def"
+                },
+                {
+                    "child_type_uri": "org.deepamehta.twitter.user",
+                    "child_cardinality_uri": "dm4.core.one",
+                    "parent_cardinality_uri": "dm4.core.one",
+                    "assoc_type_uri": "dm4.core.aggregation_def"
+                }
+            ],
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "composite": {
+                        "dm4.webclient.icon": "/org.deepamehta.twitter-research/images/tweet_icon_three.png",
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": true,
+                        "dm4.webclient.multi_renderer_uri" : "org.deepamehta.twitter.tweet_multi_renderer"
+                    }
+                }
+            ],
+            "label_config": [ "org.deepamehta.twitter.user", "org.deepamehta.twitter.tweet_content" ]
+        },
+        {
+            "value": "Twitter Search",
+            "uri": "org.deepamehta.twitter.search",
+            "data_type_uri": "dm4.core.composite",
+            "assoc_defs": [
+                {
+                    "child_type_uri": "org.deepamehta.twitter.search_query",
+                    "child_cardinality_uri": "dm4.core.one",
+                    "assoc_type_uri": "dm4.core.composition_def"
+                },
+                {
+                    "child_type_uri": "org.deepamehta.twitter.query_size",
+                    "child_cardinality_uri": "dm4.core.one",
+                    "assoc_type_uri": "dm4.core.composition_def"
+                },
+                {
+                    "child_type_uri": "org.deepamehta.twitter.search_language",
+                    "child_cardinality_uri": "dm4.core.one",
+                    "parent_cardinality_uri": "dm4.core.one",
+                    "assoc_type_uri": "dm4.core.aggregation_def"
+                },
+                {
+                    "child_type_uri": "org.deepamehta.twitter.search_location",
+                    "child_cardinality_uri": "dm4.core.one",
+                    "assoc_type_uri": "dm4.core.composition_def"
+                },
+                {
+                    "child_type_uri": "org.deepamehta.twitter.search_result_type",
+                    "child_cardinality_uri": "dm4.core.one",
+                    "assoc_type_uri": "dm4.core.composition_def"
+                },
+                {
+                    "child_type_uri": "org.deepamehta.twitter.search_refresh_url",
+                    "child_cardinality_uri": "dm4.core.one",
+                    "assoc_type_uri": "dm4.core.composition_def"
+                },
+                {
+                    "child_type_uri": "org.deepamehta.twitter.search_next_page",
+                    "child_cardinality_uri": "dm4.core.one",
+                    "assoc_type_uri": "dm4.core.composition_def"
+                },
+                {
+                    "child_type_uri": "org.deepamehta.twitter.search_last_tweet_id",
+                    "child_cardinality_uri": "dm4.core.one",
+                    "assoc_type_uri": "dm4.core.composition_def"
+                },
+                {
+                    "child_type_uri": "org.deepamehta.twitter.search_result_size",
+                    "child_cardinality_uri": "dm4.core.one",
+                    "assoc_type_uri": "dm4.core.composition_def"
+                },
+                {
+                    "child_type_uri": "org.deepamehta.twitter.last_search_time",
+                    "child_cardinality_uri": "dm4.core.one",
+                    "assoc_type_uri": "dm4.core.composition_def"
+                },
+                {
+                    "child_type_uri": "org.deepamehta.twitter.tweet",
+                    "child_cardinality_uri": "dm4.core.many",
+                    "parent_cardinality_uri": "dm4.core.one",
+                    "assoc_type_uri": "dm4.core.aggregation_def"
+                }
+            ],
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "composite": {
+                        "dm4.webclient.icon": "/org.deepamehta.twitter-research/images/search_icon_48.png",
+                        "dm4.webclient.show_in_create_menu": true,
+                        "dm4.webclient.searchable_as_unit": true
+                    }
+                }
+            ],
+            "label_config": [
+                "org.deepamehta.twitter.search_query", "org.deepamehta.twitter.search_language",
+                "org.deepamehta.twitter.search_result_type", "org.deepamehta.twitter.last_search_time" ]
+        }
+    ], "topics": [
+        {
+            "type_uri" : "org.deepamehta.twitter.search_language",
+            "uri" : "org.deepamehta.twitter.lang_de",
+            "value": "de"
+        },
+        {
+            "type_uri" : "org.deepamehta.twitter.search_language",
+            "uri" : "org.deepamehta.twitter.lang_en",
+            "value": "en"
+        },
+        {
+            "type_uri" : "org.deepamehta.twitter.search_language",
+            "uri" : "org.deepamehta.twitter.lang_unspecified",
+            "value": "unspecified"
+        },
+        {
+            "type_uri" : "org.deepamehta.twitter.search_language",
+            "uri" : "org.deepamehta.twitter.lang_afrikaans",
+            "value": "af"
+        },
+        {
+            "type_uri" : "org.deepamehta.twitter.search_language",
+            "uri" : "org.deepamehta.twitter.lang_albanian",
+            "value": "al"
+        },
+        {
+            "type_uri" : "org.deepamehta.twitter.search_language",
+            "uri" : "org.deepamehta.twitter.lang_arabic",
+            "value": "ar"
+        },
+        {
+            "type_uri" : "org.deepamehta.twitter.search_language",
+            "uri" : "org.deepamehta.twitter.lang_burmes",
+            "value": "my"
+        },
+        {
+            "type_uri" : "org.deepamehta.twitter.search_language",
+            "uri" : "org.deepamehta.twitter.lang_greek",
+            "value": "el"
+        },
+        {
+            "type_uri" : "org.deepamehta.twitter.search_language",
+            "uri" : "org.deepamehta.twitter.lang_persian",
+            "value": "fa"
+        },
+        {
+            "type_uri" : "org.deepamehta.twitter.search_language",
+            "uri" : "org.deepamehta.twitter.lang_polish",
+            "value": "pl"
+        },
+        {
+            "type_uri" : "org.deepamehta.twitter.search_language",
+            "uri" : "org.deepamehta.twitter.lang_portuguese",
+            "value": "pt"
+        },
+        {
+            "type_uri" : "org.deepamehta.twitter.search_language",
+            "uri" : "org.deepamehta.twitter.lang_swedish",
+            "value": "sv"
+        },
+        {
+            "type_uri" : "org.deepamehta.twitter.search_language",
+            "uri" : "org.deepamehta.twitter.lang_turkish",
+            "value" : "tr"
+        },
+        {
+            "type_uri" : "org.deepamehta.twitter.search_language",
+            "uri" : "org.deepamehta.twitter.lang_russian",
+            "value" : "ru"
+        },
+        {
+            "type_uri" : "org.deepamehta.twitter.search_language",
+            "uri" : "org.deepamehta.twitter.lang_spanish",
+            "value" : "es"
+        },
+        {
+            "type_uri" : "org.deepamehta.twitter.search_language",
+            "uri" : "org.deepamehta.twitter.lang_japanese",
+            "value" : "ja"
+        }
+    ]
+}
