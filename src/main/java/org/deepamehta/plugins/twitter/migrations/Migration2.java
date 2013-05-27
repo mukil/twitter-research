@@ -11,7 +11,7 @@ import java.util.logging.Logger;
 /**
  * A basic wrapper for the public Twitter Search API and DeepaMehta 4.
  *
- * @version 1.0
+ * @version 1.1
  * @author Malte Reißig (<malte@mikromedia.de>)
  * @website http://github.com/mukil
  *
@@ -50,6 +50,8 @@ public class Migration2 extends Migration {
     private final static String TWITTER_SEARCH_RESULT_SIZE_URI = "org.deepamehta.twitter.search_result_size";
     private final static String TWITTER_SEARCH_TIME_URI = "org.deepamehta.twitter.last_search_time";
 
+    private final static String DEEPAMEHTA_USERNAME_URI = "dm4.accesscontrol.username";
+
 
     private String WS_WEB_RESEARCH_URI = "org.deepamehta.workspaces.web_research";
 
@@ -60,7 +62,10 @@ public class Migration2 extends Migration {
         TopicModel workspace = new TopicModel(WS_WEB_RESEARCH_URI, "dm4.workspaces.workspace");
         Topic ws = dms.createTopic(workspace, null);
         ws.setSimpleValue("Twitter Research");
-
+        // assign "admin" username to "Twitter Research"-Workspace
+        Topic administrator = dms.getTopic(DEEPAMEHTA_USERNAME_URI, new SimpleValue("admin"), true, null);
+        // logger.info("Assigning user \"" + administrator.getSimpleValue() + "\" to new WS: \"Twitter Research\"");
+        assignWorkspace(administrator);
         // assign all Types
         TopicType twitterSearchType = dms.getTopicType(TWITTER_SEARCH_URI, null);
         TopicType querySize = dms.getTopicType(TWITTER_SEARCH_QUERY_SIZE, null);
@@ -127,9 +132,6 @@ public class Migration2 extends Migration {
     // === Workspace ===
 
     private void assignWorkspace(Topic topic) {
-        if (hasWorkspace(topic)) {
-            return;
-        }
         Topic defaultWorkspace = dms.getTopic("uri", new SimpleValue(WS_WEB_RESEARCH_URI), false, null);
         dms.createAssociation(new AssociationModel("dm4.core.aggregation",
             new TopicRoleModel(topic.getId(), "dm4.core.parent"),
@@ -137,8 +139,4 @@ public class Migration2 extends Migration {
         ), null);
     }
 
-    private boolean hasWorkspace(Topic topic) {
-        return topic.getRelatedTopics("dm4.core.aggregation", "dm4.core.parent", "dm4.core.child",
-            "dm4.workspaces.workspace", false, false, 0, null).getSize() > 0;
-    }
 }

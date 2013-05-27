@@ -10,7 +10,7 @@ import java.util.Set;
 /**
  * A basic service for the public Twitter Search API and DeepaMehta 4.
  *
- * @version 1.0
+ * @version 1.1
  * @author Malte Reißig (<malte@mikromedia.de>)
  * @website http://github.com/mukil
  *

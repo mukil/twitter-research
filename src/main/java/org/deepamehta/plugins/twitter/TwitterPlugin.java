@@ -35,7 +35,7 @@ import org.deepamehta.plugins.twitter.service.TwitterService;
  *
  * @author Malte Reißig (<malte@mikromedia.de>)
  * @website http://github.com/mukil/dm4-twitter-research
- * @version 1.0
+ * @version 1.1
  *
  */
 

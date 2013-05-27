@@ -4,7 +4,7 @@ dm4c.add_multi_renderer('org.deepamehta.twitter.tweet_multi_renderer', {
 
         sort_page_models()
 
-        var list = $('"<ul class="twitter-list">')
+        var list = $('<ul class="twitter-list">')
         for (var i = 0; i < page_models.length; i++) {
             var item = page_models[i].object
             if (item != undefined) {
