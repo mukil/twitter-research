@@ -1,6 +1,38 @@
 {
     "topic_types": [
         {
+            "value": "Twitter Key",
+            "uri": "org.deepamehta.twitter.key",
+            "data_type_uri": "dm4.core.text",
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "composite": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false,
+                        "dm4.webclient.rows": 1,
+                        "dm4.webclient.icon": "/org.deepamehta.twitter-research/images/oauth_application.png"
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Twitter Secret",
+            "uri": "org.deepamehta.twitter.secret",
+            "data_type_uri": "dm4.core.text",
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "composite": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false,
+                        "dm4.webclient.rows": 1,
+                        "dm4.webclient.icon": "/org.deepamehta.twitter-research/images/oauth_application.png"
+                    }
+                }
+            ]
+        },
+        {
             "value": "Twitter Search Query",
             "uri": "org.deepamehta.twitter.search_query",
             "data_type_uri": "dm4.core.text",
@@ -31,22 +63,6 @@
                         "dm4.webclient.show_in_create_menu": false,
                         "dm4.webclient.searchable_as_unit": false,
                         "dm4.webclient.simple_renderer_uri": "org.deepamehta.twitter.search_timestamp_field"
-                    }
-                }
-            ]
-        },
-        {
-            "value": "Max. Number of Search Results (0-100)",
-            "uri": "org.deepamehta.twitter.query_size",
-            "data_type_uri": "dm4.core.number",
-            "view_config_topics": [
-                {
-                    "type_uri": "dm4.webclient.view_config",
-                    "composite": {
-                        "dm4.webclient.show_in_create_menu": false,
-                        "dm4.webclient.searchable_as_unit": false,
-                        "dm4.webclient.input_field_rows": 1,
-                        "dm4.webclient.simple_renderer_uri": "org.deepamehta.twitter.search_query_size_field"
                     }
                 }
             ]
@@ -248,7 +264,7 @@
                 {
                     "type_uri": "dm4.webclient.view_config",
                     "composite": {
-                        "dm4.webclient.icon": "/org.deepamehta.twitter-research/images/profile_icon_black_24.png",
+                        "dm4.webclient.icon": "/org.deepamehta.twitter-research/images/Twitter_Profile.png",
                         "dm4.webclient.show_in_create_menu": false,
                         "dm4.webclient.searchable_as_unit": true
                     }
@@ -567,11 +583,6 @@
                     "assoc_type_uri": "dm4.core.composition_def"
                 },
                 {
-                    "child_type_uri": "org.deepamehta.twitter.query_size",
-                    "child_cardinality_uri": "dm4.core.one",
-                    "assoc_type_uri": "dm4.core.composition_def"
-                },
-                {
                     "child_type_uri": "org.deepamehta.twitter.search_language",
                     "child_cardinality_uri": "dm4.core.one",
                     "parent_cardinality_uri": "dm4.core.one",
@@ -623,7 +634,7 @@
                 {
                     "type_uri": "dm4.webclient.view_config",
                     "composite": {
-                        "dm4.webclient.icon": "/org.deepamehta.twitter-research/images/search_icon_48.png",
+                        "dm4.webclient.icon": "/org.deepamehta.twitter-research/images/Twitter_Search_Cloud.png",
                         "dm4.webclient.show_in_create_menu": true,
                         "dm4.webclient.searchable_as_unit": true
                     }
@@ -713,6 +724,16 @@
             "type_uri" : "org.deepamehta.twitter.search_language",
             "uri" : "org.deepamehta.twitter.lang_japanese",
             "value" : "ja"
+        },
+        {
+            "type_uri" : "org.deepamehta.twitter.secret",
+            "uri" : "org.deepamehta.twitter.application_secret",
+            "value" : ""
+        },
+        {
+            "type_uri" : "org.deepamehta.twitter.key",
+            "uri" : "org.deepamehta.twitter.application_key",
+            "value" : ""
         }
     ]
 }

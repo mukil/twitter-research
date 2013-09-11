@@ -24,6 +24,8 @@
                         dm4c.do_select_topic(data.id, true)
                     },
                     error: function(jq_xhr, text_status, error_thrown) {
+                        $('#page-content').html('<div class="field-label twitter-search-started">'
+                            + 'An error occured: ' +error_thrown+ ' </div>')
                         throw "RESTClientError: GET request failed (" + text_status + ": "
                             + error_thrown + ")"
                     },

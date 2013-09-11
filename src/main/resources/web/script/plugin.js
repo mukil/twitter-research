@@ -10,15 +10,15 @@
             var language = $('#page-content .twitter-search-lang').text()
             var location = $('#page-content .twitter-search-location').text()
             var resultType = $('#page-content .twitter-query-type').text()
-            var querySize = $('#page-content .twitter-query-size').text()
+
+            if (query === "") return undefined
 
             if (language === "") language = "unspecified"
             if (location === "") location = "none"
             if (resultType === "") resultType = "recent"
-            if (querySize === "") querySize = 100
 
             var requestUri = '/tweet/search/public/' + dm4c.selected_object.id + '/' +encodeURIComponent(query) + '/'
-                + querySize + '/' + resultType + '/' + language + '/' + location
+                + resultType + '/' + language + '/' + location
 
             var response_data_type = response_data_type || "json"
             //
@@ -30,6 +30,8 @@
                     dm4c.do_select_topic(data.id, true)
                 },
                 error: function(jq_xhr, text_status, error_thrown) {
+                    $('#page-content').html('<div class="field-label twitter-search-started">'
+                        + 'An error occured: ' +error_thrown+ ' </div>')
                     throw "RESTClientError: GET request failed (" + text_status + ": " + error_thrown + ")"
                 },
                 complete: function(jq_xhr, text_status) {

@@ -1,5 +1,7 @@
-/** A simple renderer hiding and returning the server-side set value on the given topic. */
+
 dm4c.add_simple_renderer('org.deepamehta.twitter.tweet_location_field', {
+
+    /** A simple renderer hiding and returning the server-side set value on the given topic. */
 
     render_info: function (model, $parent) {
         $parent.append('<div class="field-item tweet"><b>' +model.object.value+ '</b>')

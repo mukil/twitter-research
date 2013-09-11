@@ -22,7 +22,7 @@ dm4c.add_multi_renderer('org.deepamehta.twitter.tweet_multi_renderer', {
                         text = item.value
                     }
                     // give info-item some behaviour
-                    $listItem = $('<div id="' +item.id+ '">')
+                    $listItem = $('<div id="' +item.id+ '" title="Reveal this tweet in the map panel">')
                     $listItem.click(function(e) {
                         var topicId = this.id
                         dm4c.do_reveal_related_topic(topicId)

@@ -1,5 +1,7 @@
-/** A simple renderer hiding and returning the server-side set value on the given topic. */
+
 dm4c.add_simple_renderer('org.deepamehta.twitter.tweet_withheld_copyright_field', {
+
+    /** A simple renderer hiding and returning the server-side set value on the given topic. */
 
     render_info: function (model, $parent) {
         // a boolean indicating "wether this piece of content has been withheld due to a DMCA complaint"

@@ -1,41 +1,46 @@
 package org.deepamehta.plugins.twitter;
 
-import java.util.logging.Logger;
-
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.WebApplicationException;
-
-import de.deepamehta.core.model.TopicModel;
+import com.sun.jersey.core.util.Base64;
+import de.deepamehta.core.RelatedTopic;
+import de.deepamehta.core.ResultSet;
 import de.deepamehta.core.Topic;
-import de.deepamehta.core.model.*;
+import de.deepamehta.core.model.CompositeValueModel;
+import de.deepamehta.core.model.SimpleValue;
+import de.deepamehta.core.model.TopicModel;
 import de.deepamehta.core.osgi.PluginActivator;
 import de.deepamehta.core.service.ClientState;
 import de.deepamehta.core.service.Directives;
+import de.deepamehta.core.service.PluginService;
+import de.deepamehta.core.service.annotation.ConsumesService;
 import de.deepamehta.core.storage.spi.DeepaMehtaTransaction;
+import de.deepamehta.plugins.accesscontrol.model.ACLEntry;
+import de.deepamehta.plugins.accesscontrol.model.AccessControlList;
+import de.deepamehta.plugins.accesscontrol.model.Operation;
+import de.deepamehta.plugins.accesscontrol.model.UserRole;
+import de.deepamehta.plugins.accesscontrol.service.AccessControlService;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.Date;
+import java.util.Iterator;
+import java.util.logging.Logger;
+import javax.ws.rs.*;
+import javax.ws.rs.core.Response.Status;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
-
 import org.deepamehta.plugins.twitter.service.TwitterService;
 
 /**
- * A basic wrapper for the public Twitter Search API and DeepaMehta 4.
+ * A very basic client for researching with the public Twitter Search API v1.1 and DeepaMehta 4.1.2
  *
  * @author Malte Reißig (<malte@mikromedia.de>)
- * @website http://github.com/mukil/dm4-twitter-research
- * @version 1.1
+ * @website https://github.com/mukil/twitter-research
+ * @version 1.2-SNAPSHOT
  *
  */
 
@@ -46,15 +51,14 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
 
     private Logger log = Logger.getLogger(getClass().getName());
 
-    private final static String VERSION = "1.0";
+    private final String DEEPAMEHTA_VERSION = "DeepaMehta 4.1.2";
+    private final String TWITTER_RESEARCH_VERSION = "1.2-SNAPSHOT";
+    private final String CHARSET = "UTF-8";
 
     private final static String CHILD_URI = "dm4.core.child";
     private final static String PARENT_URI = "dm4.core.parent";
-    private final static String DEFAULT_URI = "dm4.core.default";
     private final static String AGGREGATION = "dm4.core.aggregation";
     private final static String COMPOSITION = "dm4.core.composition";
-    private final static String ASSOCIATION = "dm4.core.association";
-    private final static String SEARCH_RESULT = "dm4.webclient.search_result_item";
 
     private final static String TWEET_URI = "org.deepamehta.twitter.tweet";
     private final static String TWEET_ID_URI = "org.deepamehta.twitter.tweet_id";
@@ -76,7 +80,6 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
     private final static String TWITTER_USER_IMAGE_URI = "org.deepamehta.twitter.user_image_url";
 
     private final static String TWITTER_SEARCH_URI = "org.deepamehta.twitter.search";
-    private final static String TWITTER_SEARCH_QUERY_SIZE = "org.deepamehta.twitter.query_size";
     private final static String TWITTER_SEARCH_LANG_URI = "org.deepamehta.twitter.search_language";
     private final static String TWITTER_SEARCH_LOCATION_URI = "org.deepamehta.twitter.search_location";
     private final static String TWITTER_SEARCH_TYPE_URI = "org.deepamehta.twitter.search_result_type";
@@ -86,11 +89,85 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
     private final static String TWITTER_SEARCH_RESULT_SIZE_URI = "org.deepamehta.twitter.search_result_size";
     private final static String TWITTER_SEARCH_TIME_URI = "org.deepamehta.twitter.last_search_time";
 
-    private final static String SEARCH_BASE_URL = "https://search.twitter.com/search.json";
+    private final static String TWITTER_AUTHENTICATION_URL = "https://api.twitter.com/oauth2/token";
+    private final static String TWITTER_SEARCH_BASE_URL = "https://api.twitter.com/1.1/search/tweets.json";
 
-    private final String CHARSET = "UTF-8";
+    private boolean isInitialized = false;
+    private AccessControlService acService = null;
 
 
+
+    /** Initialize the migrated soundsets ACL-Entries. */
+    @Override
+    public void init() {
+        isInitialized = true;
+        configureIfReady();
+    }
+
+    private void configureIfReady() {
+        if (isInitialized) {
+            checkACLsOfMigration();
+        }
+    }
+
+    private JSONObject authorizeSearchRequests () throws TwitterAPIException {
+        Topic applicationKey  = dms.getTopic("uri", new SimpleValue("org.deepamehta.twitter.application_key"), true);
+        Topic applicationSecret  = dms.getTopic("uri",
+                new SimpleValue("org.deepamehta.twitter.application_secret"), true);
+        try {
+            StringBuilder resultBody = new StringBuilder();
+            URL requestUri = new URL(TWITTER_AUTHENTICATION_URL);
+            //
+            String key = URLEncoder.encode(applicationKey.getSimpleValue().toString(), CHARSET);
+            String secret = URLEncoder.encode(applicationSecret.getSimpleValue().toString(), CHARSET);
+            // get base64 encoded secrets
+            if (key.isEmpty() || secret.isEmpty()) {
+                throw new TwitterAPIException("Bad Twitter secrets, please register your application.",
+                        Status.UNAUTHORIZED);
+            }
+            String values =  key + ":" + secret;
+            String credentials = new String(Base64.encode(values));
+            // initiate request
+            HttpURLConnection connection = (HttpURLConnection) requestUri.openConnection();
+            connection.setDoOutput(true);
+            connection.setDoInput(true);
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("User-Agent", "DeepaMehta "+DEEPAMEHTA_VERSION+" - "
+                    + "Twitter Research " + TWITTER_RESEARCH_VERSION);
+            connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded;charset=" + CHARSET);
+            connection.setRequestProperty("Authorization", "Basic " + credentials);
+            //
+            OutputStreamWriter writer = new OutputStreamWriter(connection.getOutputStream());
+            String parameters = "grant_type=client_credentials";
+            writer.write(parameters);
+            writer.flush();
+            //
+            int httpStatusCode = connection.getResponseCode();
+            if (httpStatusCode != HttpURLConnection.HTTP_OK) {
+                throw new TwitterAPIException("Error with HTTPConnection.", Status.INTERNAL_SERVER_ERROR);
+            }
+            // read in the response
+            BufferedReader rd = new BufferedReader(new InputStreamReader(connection.getInputStream(), CHARSET));
+            for (String input; (input = rd.readLine()) != null;) {
+                resultBody.append(input);
+            }
+            rd.close();
+            writer.close();
+            // TODO: Check if answer is something like "403: Too many requests"
+            if (resultBody.toString().isEmpty()) {
+                throw new TwitterAPIException("Twitter just handed us an empty response ("+httpStatusCode+")",
+                        Status.NO_CONTENT);
+            }
+            //
+            JSONObject response;
+            response = new JSONObject(resultBody.toString());
+            return response;
+        } catch (JSONException ex) {
+            throw new RuntimeException("Internal Server Error while parsing response " + ex.getMessage());
+        } catch (IOException ex) {
+            throw new RuntimeException("Internal Server Error HTTP I/O Error " + ex.getMessage());
+        }
+    }
 
     /**
      *  This method executes an existing search-query to either:
@@ -108,29 +185,40 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
     public Topic searchMoreTweets(@PathParam("id") long searchId,
             @PathParam("nextPage") boolean nextPage, @HeaderParam("Cookie") ClientState clientState) {
 
-        Topic query = dms.getTopic(searchId, true, clientState);
+        Topic query = dms.getTopic(searchId, true);
         StringBuffer resultBody = new StringBuffer();
         URL requestUri = null;
         DeepaMehtaTransaction tx = dms.beginTx();
         try {
-            log.info("Researching tweets for Twitter-Search (" +query.getId()+ ") next ? " + nextPage);
+            // obtain access token
+            JSONObject response = authorizeSearchRequests();
+            if (response == null) throw new WebApplicationException(new Throwable("Bad Twitter Secrets. "
+                    + "Consider to register your application at https://dev.twitter.com/apps/new and then enter "
+                    + "your consumer data in DeepaMehta."), Status.UNAUTHORIZED);
+            String token = response.getString("access_token");
+            //
+            log.fine("Researching tweets for Twitter-Search (" +query.getId()+ ") next ? " + nextPage);
             if (nextPage) {
                 // paging to next-page (query for older-tweets)
                 String nextPageUrl = query.getCompositeValue().getString(TWITTER_SEARCH_NEXT_PAGE_URI);
-                requestUri = new URL(SEARCH_BASE_URL + nextPageUrl);
+                requestUri = new URL(TWITTER_SEARCH_BASE_URL + nextPageUrl);
             } else {
                 // refreshing (query for new-tweets)
                 String refreshPageUrl = query.getCompositeValue().getString(TWITTER_SEARCH_REFRESH_URL_URI);
-                requestUri = new URL(SEARCH_BASE_URL + refreshPageUrl);
+                requestUri = new URL(TWITTER_SEARCH_BASE_URL + refreshPageUrl);
             }
-            log.info("Requesting => " + requestUri.toString());
+            log.fine("Requesting => " + requestUri.toString());
             // initiate request
             HttpURLConnection connection = (HttpURLConnection) requestUri.openConnection();
-            connection.setRequestProperty("User-Agent", "DeepaMehta Software Platform/4.1 - "
-                    + "org.deepamehta Twitter Search 1.0-SNAPSHOT");
+            connection.setRequestMethod("GET");
+            connection.setRequestProperty("User-Agent", "DeepaMehta "+DEEPAMEHTA_VERSION+" - "
+                    + "Twitter Research " + TWITTER_RESEARCH_VERSION);
+            connection.setRequestProperty("Authorization", "Bearer " + token);
+            // check the response
             int httpStatusCode = connection.getResponseCode();
             if (httpStatusCode != HttpURLConnection.HTTP_OK) {
-                throw new WebApplicationException(new RuntimeException("Error with HTTPConnection"), httpStatusCode);
+                throw new WebApplicationException(new Throwable("Error with HTTPConnection."),
+                        Status.INTERNAL_SERVER_ERROR);
             }
             // read in the response
             BufferedReader rd = new BufferedReader(new InputStreamReader(connection.getInputStream(), CHARSET));
@@ -140,16 +228,21 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
             rd.close();
             // TODO: Check if answer is something like "403: Too many requests"
             if (resultBody.toString().isEmpty()) {
-                log.info("Twitter just handed us an empty response.");
-                throw new WebApplicationException(new RuntimeException("Twitter handed us an empty result."), 404);
+                throw new WebApplicationException(new RuntimeException("Twitter handed just us an empty response."),
+                        Status.NO_CONTENT);
             } else {
                 processTwitterSearchResponse(query, resultBody, clientState);
             }
             tx.success();
+        } catch (TwitterAPIException ex) {
+            throw new WebApplicationException(new Throwable(ex.getMessage()), ex.getStatus());
+        } catch (JSONException ex) {
+            throw new RuntimeException("Exception during parsing of JSON", ex);
         } catch (MalformedURLException e) {
-            throw new WebApplicationException(new RuntimeException("Could not trigger existing search-topic."), 500);
+            throw new RuntimeException("Could not trigger existing search-topic.", e);
         } catch (IOException ioe) {
-            throw new WebApplicationException(new RuntimeException("HTTP I/O Error"), 500);
+            throw new WebApplicationException(new Throwable("Most probably we made a mistake in constructing the query. "
+                    + "We're sorry, please try again."), Status.BAD_REQUEST);
         } finally {
             tx.finish();
         }
@@ -162,58 +255,70 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
      * Fetches public tweets matching the given <code>query</code>, maintains a search-query topic and
      * references existing tweets and users, as it should be.
      *
-     * @param {querySize}   1-100
+     * @param {id}          Twitter Search Topic Id
      * @param {resultType}  "mixed", "recent", "popular"
      * @param {lang}        ISO-639-1 Code (2 chars)
      * @param {location}    "lat,lng,radiuskm"
      */
 
     @GET
-    @Path("/search/public/{id}/{query}/{querySize}/{resultType}/{lang}/{location}")
+    @Path("/search/public/{id}/{query}/{resultType}/{lang}/{location}")
     @Produces("application/json")
     public Topic searchPublicTweets(@PathParam("id") long searchId, @PathParam("query") String query,
-            @PathParam("querySize") int querySize, @PathParam("resultType") String resultType,
-            @PathParam("lang") String lang, @PathParam("location") String location,
-            @HeaderParam("Cookie") ClientState clientState) {
+            @PathParam("resultType") String resultType, @PathParam("lang") String lang,
+            @PathParam("location") String location, @HeaderParam("Cookie") ClientState clientState) {
 
         StringBuffer resultBody = new StringBuffer();
         DeepaMehtaTransaction tx = dms.beginTx();
         try {
-            // load search-topic created on client-side
-            Topic twitterSearch = dms.getTopic(searchId, true, clientState);
-            log.info("Resarching Public Tweets " +query+ " (" +resultType+ ") "
+            // obtain access token
+            JSONObject response = authorizeSearchRequests();
+            if (response == null) throw new WebApplicationException(new Throwable("Bad Twitter Secrets. "
+                    + "Consider to register your application at https://dev.twitter.com/apps/new."), 500);
+            String token = response.getString("access_token");
+            // fixme: check if access_token is of type "bearer"
+            // setup search container
+            Topic twitterSearch = dms.getTopic(searchId, true);
+            log.fine("Resarching Public Tweets " +query+ " (" +resultType+ ") "
                     + "in language: " + lang + " near loc: " + location);
             // construct search query
-            String queryUrl = SEARCH_BASE_URL + "?q=" + URLEncoder.encode(query.toString(), "UTF-8")
-                    + ";&rpp=" + querySize + ";&include_entities=true;&result_type=" + resultType + ";";
+            String queryUrl = TWITTER_SEARCH_BASE_URL + "?q=" + URLEncoder.encode(query.toString(), CHARSET)
+                    + ";&include_entities=true;&result_type=" + resultType + ";"; // ;&rpp=" + querySize + "
             if (!lang.isEmpty() && !lang.equals("unspecified")) queryUrl += "&lang="+lang+";";
             if (!location.isEmpty() && !location.equals("none")) queryUrl += "&geocode="+location+";";
             URL requestUri = new URL(queryUrl);
-            log.info("Requesting: " + requestUri.toString());
+            log.fine("Requesting: " + requestUri.toString());
 
             // initiate request
             HttpURLConnection connection = (HttpURLConnection) requestUri.openConnection();
-            connection.setRequestProperty("User-Agent", "DeepaMehta Software Platform ("
-                    + "org.deepamehta Twitter Search " + VERSION + ")");
+            connection.setRequestMethod("GET");
+            connection.setRequestProperty("User-Agent", "DeepaMehta "+DEEPAMEHTA_VERSION+" - "
+                    + "Twitter Research " + TWITTER_RESEARCH_VERSION);
+            connection.setRequestProperty("Authorization", "Bearer " + token);
+            // check the response
             int httpStatusCode = connection.getResponseCode();
             if (httpStatusCode != HttpURLConnection.HTTP_OK) {
-                throw new WebApplicationException(new RuntimeException("Error with HTTPConnection"), httpStatusCode);
+                throw new WebApplicationException(new Throwable("Error with HTTPConnection."),
+                        Status.INTERNAL_SERVER_ERROR);
             }
-
-			// read in the response
+            // read in the response
 			BufferedReader rd = new BufferedReader(new InputStreamReader(connection.getInputStream(), CHARSET));
             for (String input; (input = rd.readLine()) != null;) {
                 resultBody.append(input);
             }
             rd.close();
             if (resultBody.toString().isEmpty()) {
-                log.info("Twitter just handed us an empty response.");
-                throw new WebApplicationException(new RuntimeException("Twitter handed us an empty result."), 404);
+                throw new WebApplicationException(new RuntimeException("Twitter just handed us an empty response."),
+                        Status.NO_CONTENT);
             } else {
                 processTwitterSearchResponse(twitterSearch, resultBody, clientState);
             }
             tx.success();
             return twitterSearch;
+        } catch (TwitterAPIException ex) {
+            throw new WebApplicationException(new Throwable(ex.getMessage()), ex.getStatus());
+        } catch (JSONException ex) {
+            throw new WebApplicationException(new RuntimeException("HTTP Authorization Response Parsing Error", ex));
         } catch (IOException e) {
             throw new WebApplicationException(new RuntimeException("HTTP I/O Error", e));
         } finally {
@@ -231,13 +336,15 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
             //
             JSONObject results = new JSONObject(resultBody.toString());
             // add or reference all new tweets and new twitter user accounts
-            for (int i=0; i < results.getJSONArray("results").length(); i++) {
-                JSONObject item = results.getJSONArray("results").getJSONObject(i);
+            for (int i=0; i < results.getJSONArray("statuses").length(); i++) {
+                JSONObject item = results.getJSONArray("statuses").getJSONObject(i);
                 // gets an existing or creates a new "Twitter User"-Topic
+                JSONObject user = item.getJSONObject("user");
                 String userName = "", twitterUserId = "", profileImageUrl = "";
-                if (item.has("from_user")) userName = item.getString("from_user");
-                if (item.has("from_user_id_str")) twitterUserId = item.getString("from_user_id_str");
-                if (item.has("profile_image_url")) profileImageUrl = item.getString("profile_image_url");
+                if (user.has("name")) userName = user.getString("name");
+                if (user.has("id_str")) twitterUserId = user.getString("id_str");
+                if (user.has("profile_image_url")) profileImageUrl = user.getString("profile_image_url");
+
                 Topic twitterUser = getTwitterUser(twitterUserId, userName, profileImageUrl, clientState);
                 // gets an existing or creates a new "Tweet"-Topic
                 Topic tweet = getTweet(item, twitterUser.getId(), clientState);
@@ -252,13 +359,18 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
 
             // get current (overall) result size
             int size = twitterSearch.getRelatedTopics(AGGREGATION, PARENT_URI, CHILD_URI, TWEET_URI, false, false,
-                    0, clientState).getTotalCount();
+                    0).getTotalCount();
             // update our "Twitter Search"-Topic to reflect results after latest query
             String nextPage = "", maxTweetId = "", refreshUrl = "";
-            if (results.has("max_id_str")) maxTweetId = results.getString("max_id_str");
-            if (results.has("next_page")) nextPage = results.getString("next_page");
-            if (results.has("refresh_url")) refreshUrl = results.getString("refresh_url");
-
+            JSONObject search_metadata;
+            if (results.has("search_metadata")) {
+                search_metadata = results.getJSONObject("search_metadata");
+                //
+                if (search_metadata.has("max_id_str")) maxTweetId = search_metadata.getString("max_id_str");
+                if (search_metadata.has("next_results")) nextPage = search_metadata.getString("next_results");
+                if (search_metadata.has("refresh_url")) refreshUrl = search_metadata.getString("refresh_url");
+            }
+            // update search cointainer
             twitterSearch.getCompositeValue().set(TWITTER_SEARCH_NEXT_PAGE_URI,
                     nextPage, clientState, new Directives());
             twitterSearch.getCompositeValue().set(TWITTER_SEARCH_RESULT_SIZE_URI, size,
@@ -271,8 +383,7 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
                     refreshUrl, clientState, new Directives());
             tx.success();
         } catch (JSONException e) {
-            throw new WebApplicationException(new RuntimeException("We could not parse the response properly."
-                + e.getMessage()), 500);
+            throw new RuntimeException("We could not parse the response properly." + e.getMessage());
         } finally {
             tx.finish();
         }
@@ -282,17 +393,15 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
         Topic tweet = null;
         DeepaMehtaTransaction tx = dms.beginTx();
         try {
-            Topic tweetId = dms.getTopic(TWEET_ID_URI, new SimpleValue(item.getString("id_str")), true, clientState);
+            Topic tweetId = dms.getTopic(TWEET_ID_URI, new SimpleValue(item.getString("id_str")), true);
             if (tweetId != null) {
-                tweet = tweetId.getRelatedTopic(COMPOSITION, CHILD_URI, PARENT_URI, TWEET_URI,
-                        true, false, clientState);
+                tweet = tweetId.getRelatedTopic(COMPOSITION, CHILD_URI, PARENT_URI, TWEET_URI, true, false);
             } else {
                 tweet = createTweet(item, userTopicId, clientState);
             }
             tx.success();
         } catch (Exception e) {
-            throw new WebApplicationException(new RuntimeException("We could neither fetch nor create a Tweet."
-                    + e.getMessage()), 500);
+            throw new RuntimeException("We could neither fetch nor create this \"Tweet\".");
         } finally {
             tx.finish();
         }
@@ -306,21 +415,25 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
             // find twitter's doc on a tweets fields (https://dev.twitter.com/docs/platform-objects/tweets)
             TopicModel topic = new TopicModel(TWEET_URI);
             String coordinates = "", inReplyToStatus = "", withheldCopyright = "",
-                    withheldInCountries = "", withheldScope = "";
+                    withheldInCountries = "", withheldScope = "", metadata = "", entities = "";
             int favourite_count = 0;
-            if (item.has("coordinates")) coordinates = item.getJSONObject("coordinates").toString();
+            if (item.has("coordinates") && !item.isNull("coordinates")) {
+                coordinates = item.getJSONObject("coordinates").toString();
+            }
             if (item.has("in_reply_to_status_id_str")) inReplyToStatus = item.getString("in_reply_to_status_id_str");
             if (item.has("withheld_copyright")) withheldCopyright = item.getString("withheld_copyright");
             if (item.has("withheld_in_countries")) withheldInCountries = item.getJSONArray("withheld_in_countries")
                     .toString();
             if (item.has("withheld_scope")) withheldScope = item.getString("withheld_scope");
-            if (item.has("favourite_count")) favourite_count = item.getInt("favourites_count");
+            if (item.has("favorite_count")) favourite_count = item.getInt("favorite_count");
+            if (item.has("place") && !item.isNull("place")) metadata = item.getJSONObject("place").toString();
+            if (item.has("entities") && !item.isNull("entities")) entities = item.getJSONObject("entities").toString();
             CompositeValueModel content = new CompositeValueModel()
                 .put(TWEET_CONTENT_URI, item.getString("text"))
                 .put(TWEET_TIME_URI, item.getString("created_at")) // is utc-time
                 .put(TWEET_ID_URI, item.getString("id_str"))
-                .put(TWEET_ENTITIES_URI, item.getJSONObject("entities").toString()) // is application-json/text
-                .put(TWEET_METADATA_URI, item.getJSONObject("metadata").toString()) // is application-json/text
+                .put(TWEET_ENTITIES_URI, entities) // is application-json/text
+                .put(TWEET_METADATA_URI, metadata) // is application-json/text
                 .put(TWEET_LOCATION_URI, coordinates) // is application-json/text
                 .put(TWEET_FAVOURITE_COUNT_URI, favourite_count)
                 .put(TWEETED_TO_STATUS_ID, inReplyToStatus)
@@ -333,7 +446,7 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
             tweet = dms.createTopic(topic, clientState);
             tx.success();
         } catch (JSONException jex) {
-            log.info(jex.getMessage());
+            throw new RuntimeException(jex.getMessage());
         } finally {
             tx.finish();
         }
@@ -345,17 +458,16 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
         DeepaMehtaTransaction tx = dms.beginTx();
         try {
             if (userId == null) throw new RuntimeException("Search Result is invalid. Missing Twitter-User-Id");
-            Topic twitterId = dms.getTopic(TWITTER_USER_ID_URI, new SimpleValue(userId), true, clientState);
+            Topic twitterId = dms.getTopic(TWITTER_USER_ID_URI, new SimpleValue(userId), true);
             if (twitterId != null) {
-                identity = twitterId.getRelatedTopic(COMPOSITION, CHILD_URI, PARENT_URI, TWITTER_USER_URI,
-                        true, false, clientState);
+                identity = twitterId.getRelatedTopic(COMPOSITION, CHILD_URI, PARENT_URI, TWITTER_USER_URI, true, false);
             } else {
                 identity = createTwitterUser(userId, userName, userImageUrl, clientState);
             }
             tx.success();
         } catch (Exception ex) {
             log.info("Crashed query for twitter-id topic, trying to create new Twitter User Topic");
-            log.info(ex.getMessage());
+            throw new RuntimeException(ex.getMessage());
         } finally {
             tx.finish();
         }
@@ -369,6 +481,83 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
                 .put(TWITTER_USER_NAME_URI, userName)
                 .put(TWITTER_USER_IMAGE_URI, userImageUrl));
         return dms.createTopic(twitterUser, clientState);
+    }
+
+    /** Code running once, after plugin initialization. */
+
+    private void checkACLsOfMigration() {
+        // secrets
+        ResultSet<RelatedTopic> secrets = dms.getTopics("org.deepamehta.twitter.secret", false, 0);
+        Iterator<RelatedTopic> secs = secrets.getIterator();
+        while (secs.hasNext()) {
+            RelatedTopic secret = secs.next();
+            DeepaMehtaTransaction dmx = dms.beginTx();
+            try {
+                if (acService.getCreator(secret) == null) {
+                    log.fine("initial ACL update of twitter secret topics " + secret.getSimpleValue().toString());
+                    Topic admin = acService.getUsername("admin");
+                    String adminName = admin.getSimpleValue().toString();
+                    acService.setCreator(secret, adminName);
+                    acService.setOwner(secret, adminName);
+                    acService.setACL(secret, new AccessControlList( //
+                            new ACLEntry(Operation.WRITE, UserRole.OWNER)));
+                }
+                dmx.success();
+           } catch (Exception ex) {
+                dmx.failure();
+                log.warning(ex.getMessage());
+                throw new RuntimeException(ex);
+            } finally {
+                dmx.finish();
+            }
+        }
+        // keys
+        ResultSet<RelatedTopic> keys = dms.getTopics("org.deepamehta.twitter.key", false, 0);
+        Iterator<RelatedTopic> ks = keys.getIterator();
+        while (ks.hasNext()) {
+            RelatedTopic key = ks.next();
+            DeepaMehtaTransaction dmx = dms.beginTx();
+            try {
+                if (acService.getCreator(key) == null) {
+                    log.fine("initial ACL update of twitter key topics " + key.getSimpleValue().toString());
+                    Topic admin = acService.getUsername("admin");
+                    String adminName = admin.getSimpleValue().toString();
+                    acService.setCreator(key, adminName);
+                    acService.setOwner(key, adminName);
+                    acService.setACL(key, new AccessControlList( //
+                            new ACLEntry(Operation.WRITE, UserRole.OWNER)));
+                }
+                dmx.success();
+           } catch (Exception ex) {
+                dmx.failure();
+                log.warning(ex.getMessage());
+                throw new RuntimeException(ex);
+            } finally {
+                dmx.finish();
+            }
+        }
+    }
+
+    /** --- Implementing PluginService Interfaces to consume AccessControlService --- */
+
+    @Override
+    @ConsumesService({
+        "de.deepamehta.plugins.accesscontrol.service.AccessControlService"
+    })
+    public void serviceArrived(PluginService service) {
+        if (service instanceof AccessControlService) {
+            acService = (AccessControlService) service;
+        }
+    }
+
+    @Override
+    @ConsumesService({
+        "de.deepamehta.plugins.accesscontrol.service.AccessControlService"
+    })
+    public void serviceGone(PluginService service) {
+        if (service == acService) {
+            acService = null;
+        }
     }
 
 }
