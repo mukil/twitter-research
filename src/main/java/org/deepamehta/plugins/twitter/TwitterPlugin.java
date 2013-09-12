@@ -93,6 +93,8 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
     private final static String TWITTER_SEARCH_BASE_URL = "https://api.twitter.com/1.1/search/tweets.json";
 
     private boolean isInitialized = false;
+    private boolean isAuthorized = false;
+    private String bearerToken = null;
     private AccessControlService acService = null;
 
 
@@ -110,7 +112,7 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
         }
     }
 
-    private JSONObject authorizeSearchRequests () throws TwitterAPIException {
+    private void authorizeSearchRequests () throws TwitterAPIException {
         Topic applicationKey  = dms.getTopic("uri", new SimpleValue("org.deepamehta.twitter.application_key"), true);
         Topic applicationSecret  = dms.getTopic("uri",
                 new SimpleValue("org.deepamehta.twitter.application_secret"), true);
@@ -159,9 +161,9 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
                         Status.NO_CONTENT);
             }
             //
-            JSONObject response;
-            response = new JSONObject(resultBody.toString());
-            return response;
+            JSONObject response = new JSONObject(resultBody.toString());
+            bearerToken = response.getString("access_token");
+            isAuthorized = true;
         } catch (JSONException ex) {
             throw new RuntimeException("Internal Server Error while parsing response " + ex.getMessage());
         } catch (IOException ex) {
@@ -190,13 +192,13 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
         URL requestUri = null;
         DeepaMehtaTransaction tx = dms.beginTx();
         try {
-            // obtain access token
-            JSONObject response = authorizeSearchRequests();
-            if (response == null) throw new WebApplicationException(new Throwable("Bad Twitter Secrets. "
-                    + "Consider to register your application at https://dev.twitter.com/apps/new and then enter "
-                    + "your consumer data in DeepaMehta."), Status.UNAUTHORIZED);
-            String token = response.getString("access_token");
-            //
+            if (!isAuthorized) {
+                authorizeSearchRequests();
+                if (!isAuthorized) {  // check if authorization was sucessfull
+                    throw new WebApplicationException(new Throwable("Bad Twitter Secrets. "
+                        + "Consider to register your application at https://dev.twitter.com/apps/new."), 500);
+                }
+            }
             log.fine("Researching tweets for Twitter-Search (" +query.getId()+ ") next ? " + nextPage);
             if (nextPage) {
                 // paging to next-page (query for older-tweets)
@@ -213,7 +215,7 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
             connection.setRequestMethod("GET");
             connection.setRequestProperty("User-Agent", "DeepaMehta "+DEEPAMEHTA_VERSION+" - "
                     + "Twitter Research " + TWITTER_RESEARCH_VERSION);
-            connection.setRequestProperty("Authorization", "Bearer " + token);
+            connection.setRequestProperty("Authorization", "Bearer " + bearerToken);
             // check the response
             int httpStatusCode = connection.getResponseCode();
             if (httpStatusCode != HttpURLConnection.HTTP_OK) {
@@ -234,10 +236,10 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
                 processTwitterSearchResponse(query, resultBody, clientState);
             }
             tx.success();
+            // update modification timestamp on parent (composite) topic to invalidate http caching
+            dms.updateTopic(new TopicModel(query.getId()), clientState);
         } catch (TwitterAPIException ex) {
             throw new WebApplicationException(new Throwable(ex.getMessage()), ex.getStatus());
-        } catch (JSONException ex) {
-            throw new RuntimeException("Exception during parsing of JSON", ex);
         } catch (MalformedURLException e) {
             throw new RuntimeException("Could not trigger existing search-topic.", e);
         } catch (IOException ioe) {
@@ -271,12 +273,13 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
         StringBuffer resultBody = new StringBuffer();
         DeepaMehtaTransaction tx = dms.beginTx();
         try {
-            // obtain access token
-            JSONObject response = authorizeSearchRequests();
-            if (response == null) throw new WebApplicationException(new Throwable("Bad Twitter Secrets. "
-                    + "Consider to register your application at https://dev.twitter.com/apps/new."), 500);
-            String token = response.getString("access_token");
-            // fixme: check if access_token is of type "bearer"
+            if (!isAuthorized) {
+                authorizeSearchRequests();
+                if (!isAuthorized) {  // check if authorization was sucessfull
+                    throw new WebApplicationException(new Throwable("Bad Twitter Secrets. "
+                        + "Consider to register your application at https://dev.twitter.com/apps/new."), 500);
+                }
+            }
             // setup search container
             Topic twitterSearch = dms.getTopic(searchId, true);
             log.fine("Resarching Public Tweets " +query+ " (" +resultType+ ") "
@@ -294,7 +297,7 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
             connection.setRequestMethod("GET");
             connection.setRequestProperty("User-Agent", "DeepaMehta "+DEEPAMEHTA_VERSION+" - "
                     + "Twitter Research " + TWITTER_RESEARCH_VERSION);
-            connection.setRequestProperty("Authorization", "Bearer " + token);
+            connection.setRequestProperty("Authorization", "Bearer " + bearerToken);
             // check the response
             int httpStatusCode = connection.getResponseCode();
             if (httpStatusCode != HttpURLConnection.HTTP_OK) {
@@ -317,8 +320,6 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
             return twitterSearch;
         } catch (TwitterAPIException ex) {
             throw new WebApplicationException(new Throwable(ex.getMessage()), ex.getStatus());
-        } catch (JSONException ex) {
-            throw new WebApplicationException(new RuntimeException("HTTP Authorization Response Parsing Error", ex));
         } catch (IOException e) {
             throw new WebApplicationException(new RuntimeException("HTTP I/O Error", e));
         } finally {

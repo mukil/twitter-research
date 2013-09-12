@@ -14,7 +14,6 @@
         <groupId>de.deepamehta</groupId>
         <artifactId>deepamehta-plugin-parent</artifactId>
         <version>4.1.2</version>
-        <!-- relativePath>../../Desktop/src-deepamehta/yadm/deepamehta/modules/dm4-plugin-parent/pom.xml</relativePath-->
     </parent>
 
     <dependencies>
