@@ -1,12 +1,22 @@
 
 # DeepaMehta 4 Twitter Research Plugin
 
-This plugin allows users of DeepaMehta to [query](https://dev.twitter.com/docs/using-search) [Twitters Public Search API v1.1.](https://dev.twitter.com/docs/api/1.1/get/search/tweets) and start qualitative research around events based on the messages sent by users of twitter.com. This plugin basically wraps all meaningful options of the API (e.g. Language, Location and Query-Input). The "Twitter Search"-Topic enables to "Load More Tweets" (paging) and to "Refresh Search" loading new tweets (since last query).
+This plugin allows users of DeepaMehta (4.1.2) to [query](https://dev.twitter.com/docs/using-search) [Twitters Public Search API v1.1.](https://dev.twitter.com/docs/api/1.1/get/search/tweets) and start qualitative research around events based on the messages sent by users of twitter.com. This plugin basically wraps all meaningful options of the API (e.g. Language, Location and Query-Input). The "Twitter Search"-Topic enables to "Load More Tweets" (paging) and to "Refresh Search" loading new tweets (since last query).
+
+
+## Download
+
+You can find the freshest installable bundle available for end-users at [http://download.deepamehta.de/nightly](http://download.deepamehta.de/nightly/).
+
+
+## Installation
+
+Copy the downloaded `twitter-research-1.X.jar` file into your DeepaMehta bundle repository and re-start your [DeepaMehta installation](https://github.com/jri/deepamehta#requirements).
 
 
 ## Usage & Installation Hints
 
-The Twitter Research Plugin has to rely on [Twitter Application-only authentication](https://dev.twitter.com/docs/auth/application-only-auth), which makes it necessary that you register your application scenario and hand over the consumer key and secret to your plugin installation.
+The Twitter Research Plugin has to rely on [Twitter Application-only authentication](https://dev.twitter.com/docs/auth/application-only-auth), which makes it necessary that you register your application scenario ([where this thread might prove helpful](https://dev.twitter.com/discussions/631) and hand over the consumer key and secret to your plugin installation.
 
 You must do so by revealing and editing 2 specific topics. You find those two topics via the DeepaMehta Toolbar and clicking (1) "Search" -> "By Type" -> "Twitter Secret" and (2) "Search" -> "By Type" -> "Twitter Key" and then revealing the respective (and only) search results for each of the searches. 
 
@@ -31,17 +41,6 @@ Around "Tweets" this plugin makes avaible some of the information provided by tw
 
 This plugin currently ignores the following fields of informaton on ["Tweets"](https://dev.twitter.com/docs/platform-objects/tweets): Annotations, Contributors, Current User Retweet, Filter Level, In reply to, Language, Possibly sensitive, Scopes, Retweet(ed) Count.
 
-
-## Download
-
-You can find the freshest installable bundle available for end-users at [http://download.deepamehta.de/nightly](http://download.deepamehta.de/nightly/).
-
-Here is a [direct download link to the 1.1 version](http://download.deepamehta.de/nightly/twitter-research-1.1.jar).
-
-
-## Installation
-
-Copy the downloaded `twitter-research-1.X.jar` file into your DeepaMehta bundle repository and re-start your [DeepaMehta installation](https://github.com/jri/deepamehta#requirements).
 
 
 # GNU Public License
@@ -74,7 +73,7 @@ The "Twitter User" icon used in this application is "Free for commercial use" an
 
 # History
 
-1.2-SNAPSHOT, Sep 11, 2013
+1.2, Sep 24, 2013
 
 - implemented a Client Credentials Grant of OAuth2
 - upgraded to be compatible Twitters REST Search API v1.1

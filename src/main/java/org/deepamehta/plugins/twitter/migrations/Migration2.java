@@ -13,7 +13,7 @@ import java.util.logging.Logger;
 /**
  * A basic wrapper for the public Twitter Search API and DeepaMehta 4.
  *
- * @version 1.2-SNAPSHOT
+ * @version 1.2
  * @author Malte Reißig (<malte@mikromedia.de>)
  * @website http://github.com/mukil
  *

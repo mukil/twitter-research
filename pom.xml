@@ -7,7 +7,7 @@
     <name>org.deepamehta Twitter Research</name>
     <groupId>org.deepamehta</groupId>
     <artifactId>twitter-research</artifactId>
-    <version>1.2-SNAPSHOT</version>
+    <version>1.2</version>
     <packaging>bundle</packaging>
 
     <parent>

@@ -7,7 +7,7 @@ import javax.ws.rs.core.Response.Status;
  *
  * @author Malte Reißig (<malte@mikromedia.de>)
  * @website https://github.com/mukil/twitter-research
- * @version 1.2-SNAPSHOT
+ * @version 1.2
  *
  */
 

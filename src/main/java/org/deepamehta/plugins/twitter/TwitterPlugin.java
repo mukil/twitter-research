@@ -40,7 +40,7 @@ import org.deepamehta.plugins.twitter.service.TwitterService;
  *
  * @author Malte Reißig (<malte@mikromedia.de>)
  * @website https://github.com/mukil/twitter-research
- * @version 1.2-SNAPSHOT
+ * @version 1.2
  *
  */
 
@@ -52,7 +52,7 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
     private Logger log = Logger.getLogger(getClass().getName());
 
     private final String DEEPAMEHTA_VERSION = "DeepaMehta 4.1.2";
-    private final String TWITTER_RESEARCH_VERSION = "1.2-SNAPSHOT";
+    private final String TWITTER_RESEARCH_VERSION = "1.2";
     private final String CHARSET = "UTF-8";
 
     private final static String CHILD_URI = "dm4.core.child";
