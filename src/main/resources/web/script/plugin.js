@@ -4,7 +4,7 @@
 
     dm4c.add_plugin('org.deepamehta.twitter-search', function () {
 
-        function searchPublicTweets() {
+        function searchPublicTweets(menu_item, pos_x, pos_y) {
 
             var query = $('#page-content .twitter-search-query').text()
             var language = $('#page-content .twitter-search-lang').text()

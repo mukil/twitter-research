@@ -1,15 +1,15 @@
 package org.deepamehta.plugins.twitter;
 
 import com.sun.jersey.core.util.Base64;
+import de.deepamehta.core.Association;
 import de.deepamehta.core.RelatedTopic;
 import de.deepamehta.core.ResultSet;
 import de.deepamehta.core.Topic;
-import de.deepamehta.core.model.CompositeValueModel;
-import de.deepamehta.core.model.SimpleValue;
-import de.deepamehta.core.model.TopicModel;
+import de.deepamehta.core.model.*;
 import de.deepamehta.core.osgi.PluginActivator;
 import de.deepamehta.core.service.ClientState;
 import de.deepamehta.core.service.Directives;
+import de.deepamehta.core.service.Plugin;
 import de.deepamehta.core.service.PluginService;
 import de.deepamehta.core.service.annotation.ConsumesService;
 import de.deepamehta.core.storage.spi.DeepaMehtaTransaction;
@@ -31,6 +31,7 @@ import java.util.Iterator;
 import java.util.logging.Logger;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response.Status;
+import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.deepamehta.plugins.twitter.service.TwitterService;
@@ -91,6 +92,10 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
 
     private final static String TWITTER_AUTHENTICATION_URL = "https://api.twitter.com/oauth2/token";
     private final static String TWITTER_SEARCH_BASE_URL = "https://api.twitter.com/1.1/search/tweets.json";
+
+    private final String GEO_COORDINATE_TOPIC_URI = "dm4.geomaps.geo_coordinate";
+    private final String GEO_LONGITUDE_TYPE_URI = "dm4.geomaps.longitude";
+    private final String GEO_LATITUDE_TYPE_URI = "dm4.geomaps.latitude";
 
     private boolean isInitialized = false;
     private boolean isAuthorized = false;
@@ -415,11 +420,17 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
         try {
             // find twitter's doc on a tweets fields (https://dev.twitter.com/docs/platform-objects/tweets)
             TopicModel topic = new TopicModel(TWEET_URI);
-            String coordinates = "", inReplyToStatus = "", withheldCopyright = "",
+            Topic coordinate = null;
+            String inReplyToStatus = "", withheldCopyright = "",
                     withheldInCountries = "", withheldScope = "", metadata = "", entities = "";
             int favourite_count = 0;
+            // check for and create coordinates
             if (item.has("coordinates") && !item.isNull("coordinates")) {
-                coordinates = item.getJSONObject("coordinates").toString();
+                JSONObject coordinates = item.getJSONObject("coordinates");
+                if (coordinates.has("coordinates")) {
+                    JSONArray tudes = coordinates.getJSONArray("coordinates");
+                    coordinate = createaGeoCoordinateTopic(tudes.getDouble(0), tudes.getDouble(1));
+                }
             }
             if (item.has("in_reply_to_status_id_str")) inReplyToStatus = item.getString("in_reply_to_status_id_str");
             if (item.has("withheld_copyright")) withheldCopyright = item.getString("withheld_copyright");
@@ -435,7 +446,7 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
                 .put(TWEET_ID_URI, item.getString("id_str"))
                 .put(TWEET_ENTITIES_URI, entities) // is application-json/text
                 .put(TWEET_METADATA_URI, metadata) // is application-json/text
-                .put(TWEET_LOCATION_URI, coordinates) // is application-json/text
+                .put(TWEET_LOCATION_URI, "") // unused, to be removed (?)
                 .put(TWEET_FAVOURITE_COUNT_URI, favourite_count)
                 .put(TWEETED_TO_STATUS_ID, inReplyToStatus)
                 .put(TWEET_WITHHELD_DMCA_URI, withheldCopyright) // a boolean indicating dmca-request
@@ -445,6 +456,7 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
                 .putRef(TWITTER_USER_URI, userTopicId);
             topic.setCompositeValue(content);
             tweet = dms.createTopic(topic, clientState);
+            if (coordinate != null) attachCoordinates(tweet, coordinate);
             tx.success();
         } catch (JSONException jex) {
             throw new RuntimeException(jex.getMessage());
@@ -482,6 +494,45 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
                 .put(TWITTER_USER_NAME_URI, userName)
                 .put(TWITTER_USER_IMAGE_URI, userImageUrl));
         return dms.createTopic(twitterUser, clientState);
+    }
+
+    private Association attachCoordinates(Topic item, Topic coordinates) {
+        DeepaMehtaTransaction tx = dms.beginTx();
+        Association assoc = null;
+        try {
+            assoc = dms.createAssociation(new AssociationModel("dm4.core.composition",
+                    new TopicRoleModel(item.getId(), "dm4.core.parent"), new
+                    TopicRoleModel(coordinates.getId(), "dm4.core.child")), null);
+            tx.success();
+        } catch (Exception ex) {
+            log.warning("FAILED to attach existing coordinates; ");
+            ex.printStackTrace();
+            tx.failure();
+            return null;
+        } finally {
+            tx.finish();
+        }
+        return assoc;
+    }
+
+    private Topic createaGeoCoordinateTopic(double lng, double lat) {
+        DeepaMehtaTransaction tx = dms.beginTx();
+        Topic coordinates = null;
+        try {
+            coordinates = dms.createTopic(new TopicModel(GEO_COORDINATE_TOPIC_URI), null);
+            CompositeValueModel model = new CompositeValueModel();
+            model.put(GEO_LONGITUDE_TYPE_URI, lng);
+            model.put(GEO_LATITUDE_TYPE_URI, lat);
+            coordinates.setCompositeValue(model, null, null);
+            log.info("Created Geo Coordinates .. " + coordinates.toJSON().toString());
+            tx.success();
+        } catch (Exception ex) {
+            tx.failure();
+            log.warning("FAILED to create Geo Coordinate Topic");
+        } finally {
+            tx.finish();
+        }
+        return coordinates;
     }
 
     /** Code running once, after plugin initialization. */
