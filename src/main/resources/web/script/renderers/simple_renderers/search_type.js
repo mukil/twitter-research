@@ -1,7 +1,7 @@
 dm4c.add_simple_renderer('org.deepamehta.twitter.search_type_field', {
 
     render_info: function (model, $parent) {
-        
+
         $parent.append('<div class="field-label">Twitter Search Type</div>'
                 + '<div class="twitter-query-type">' +model.object.value+ '</div>')
     },
@@ -10,12 +10,12 @@ dm4c.add_simple_renderer('org.deepamehta.twitter.search_type_field', {
 
         var value = model.object.value
         if (value === "") value = "mixed"
-        $parent.html('<div class="field-label">Twitter Search Type (mixed, recent, popular)</div>'
+        $parent.html('<div class="field-label">Twitter Search Type (recent, mixed, popular)</div>'
             +'<input type="text" class="search-type" value="' +value+ '"></input>')
 
         return function () {
             var query = $("input.search-type").val()
-            if (typeof query === undefined) return "mixed"
+            if (typeof query === undefined) return "recent"
             return query // set dummy field after edit
         }
     }

@@ -41,7 +41,7 @@ import org.deepamehta.plugins.twitter.service.TwitterService;
  *
  * @author Malte Reißig (<malte@mikromedia.de>)
  * @website https://github.com/mukil/twitter-research
- * @version 1.2
+ * @version 1.3-SNAPSHOT
  *
  */
 
@@ -53,7 +53,7 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
     private Logger log = Logger.getLogger(getClass().getName());
 
     private final String DEEPAMEHTA_VERSION = "DeepaMehta 4.1.2";
-    private final String TWITTER_RESEARCH_VERSION = "1.2";
+    private final String TWITTER_RESEARCH_VERSION = "1.3-SNAPSHOT";
     private final String CHARSET = "UTF-8";
 
     private final static String CHILD_URI = "dm4.core.child";
@@ -204,17 +204,19 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
                         + "Consider to register your application at https://dev.twitter.com/apps/new."), 500);
                 }
             }
-            log.fine("Researching tweets for Twitter-Search (" +query.getId()+ ") next ? " + nextPage);
+            log.info("Researching tweets for Twitter-Search (" +query.getId()+ ") next ? " + nextPage);
             if (nextPage) {
                 // paging to next-page (query for older-tweets)
                 String nextPageUrl = query.getCompositeValue().getString(TWITTER_SEARCH_NEXT_PAGE_URI);
+                log.info("Loading next page of tweets => " + TWITTER_SEARCH_BASE_URL + nextPageUrl);
                 requestUri = new URL(TWITTER_SEARCH_BASE_URL + nextPageUrl);
             } else {
                 // refreshing (query for new-tweets)
                 String refreshPageUrl = query.getCompositeValue().getString(TWITTER_SEARCH_REFRESH_URL_URI);
                 requestUri = new URL(TWITTER_SEARCH_BASE_URL + refreshPageUrl);
+                log.info("Loading more recent tweets => " + TWITTER_SEARCH_BASE_URL + refreshPageUrl);
             }
-            log.fine("Requesting => " + requestUri.toString());
+            log.info("Requesting => " + requestUri.toString());
             // initiate request
             HttpURLConnection connection = (HttpURLConnection) requestUri.openConnection();
             connection.setRequestMethod("GET");
@@ -244,6 +246,7 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
             // update modification timestamp on parent (composite) topic to invalidate http caching
             dms.updateTopic(new TopicModel(query.getId()), clientState);
         } catch (TwitterAPIException ex) {
+            log.warning("TwitterApiException " + ex.getMessage());
             throw new WebApplicationException(new Throwable(ex.getMessage()), ex.getStatus());
         } catch (MalformedURLException e) {
             throw new RuntimeException("Could not trigger existing search-topic.", e);
@@ -292,6 +295,7 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
             // construct search query
             String queryUrl = TWITTER_SEARCH_BASE_URL + "?q=" + URLEncoder.encode(query.toString(), CHARSET)
                     + ";&include_entities=true;&result_type=" + resultType + ";"; // ;&rpp=" + querySize + "
+            // fixme: set lang (if not provided to "") that makes API more usable
             if (!lang.isEmpty() && !lang.equals("unspecified")) queryUrl += "&lang="+lang+";";
             if (!location.isEmpty() && !location.equals("none")) queryUrl += "&geocode="+location+";";
             URL requestUri = new URL(queryUrl);
@@ -389,6 +393,7 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
                     refreshUrl, clientState, new Directives());
             tx.success();
         } catch (JSONException e) {
+            log.warning("ERROR: We could not parse the response properly " + e.getMessage());
             throw new RuntimeException("We could not parse the response properly." + e.getMessage());
         } finally {
             tx.finish();
@@ -420,16 +425,34 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
         try {
             // find twitter's doc on a tweets fields (https://dev.twitter.com/docs/platform-objects/tweets)
             TopicModel topic = new TopicModel(TWEET_URI);
-            Topic coordinate = null;
+            TopicModel coordinate = null;
             String inReplyToStatus = "", withheldCopyright = "",
                     withheldInCountries = "", withheldScope = "", metadata = "", entities = "";
             int favourite_count = 0;
-            // check for and create coordinates
+            if (item.has("place") && !item.isNull("place")) {
+                JSONObject place = item.getJSONObject("place");
+                if (place.has("bounding_box")) {
+                    JSONObject box = place.getJSONObject("bounding_box");
+                    JSONArray tudes = box.getJSONArray("coordinates");
+                    log.info("Tweet has a PLACE instead of Coordinates => " + tudes.toString());
+                    // first value in array is always longitude
+                    JSONArray container = tudes.getJSONArray(0);
+                    JSONArray lower_left = container.getJSONArray(0);
+                    JSONArray lower_right = container.getJSONArray(1);
+                    JSONArray upper_right = container.getJSONArray(2);
+                    JSONArray upper_left = container.getJSONArray(3);
+                    double lng = (upper_left.getDouble(0) + upper_right.getDouble(0) + lower_left.getDouble(0) + lower_right.getDouble(0)) / 4;
+                    double lat = (upper_left.getDouble(1) + upper_right.getDouble(1) + lower_left.getDouble(1) + lower_right.getDouble(1)) / 4;
+                    coordinate = createGeoCoordinateTopicModel(lng, lat);
+                }
+            }
+            // check for and create coordinates (simply overwrites place if given)
             if (item.has("coordinates") && !item.isNull("coordinates")) {
                 JSONObject coordinates = item.getJSONObject("coordinates");
                 if (coordinates.has("coordinates")) {
                     JSONArray tudes = coordinates.getJSONArray("coordinates");
-                    coordinate = createaGeoCoordinateTopic(tudes.getDouble(0), tudes.getDouble(1));
+                    log.info("Writing coordinates over PLACE..");
+                    coordinate = createGeoCoordinateTopicModel(tudes.getDouble(0), tudes.getDouble(1));
                 }
             }
             if (item.has("in_reply_to_status_id_str")) inReplyToStatus = item.getString("in_reply_to_status_id_str");
@@ -455,8 +478,11 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
                 .put(TWEET_SOURCE_BUTTON_URI, item.getString("source"))
                 .putRef(TWITTER_USER_URI, userTopicId);
             topic.setCompositeValue(content);
+            if (coordinate != null) {
+                content.put(GEO_COORDINATE_TOPIC_URI, coordinate.getCompositeValueModel());
+                log.info("Created Geo Coordinates => " + coordinate.toJSON().toString());
+            }
             tweet = dms.createTopic(topic, clientState);
-            if (coordinate != null) attachCoordinates(tweet, coordinate);
             tx.success();
         } catch (JSONException jex) {
             throw new RuntimeException(jex.getMessage());
@@ -496,42 +522,12 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
         return dms.createTopic(twitterUser, clientState);
     }
 
-    private Association attachCoordinates(Topic item, Topic coordinates) {
-        DeepaMehtaTransaction tx = dms.beginTx();
-        Association assoc = null;
-        try {
-            assoc = dms.createAssociation(new AssociationModel("dm4.core.composition",
-                    new TopicRoleModel(item.getId(), "dm4.core.parent"), new
-                    TopicRoleModel(coordinates.getId(), "dm4.core.child")), null);
-            tx.success();
-        } catch (Exception ex) {
-            log.warning("FAILED to attach existing coordinates; ");
-            ex.printStackTrace();
-            tx.failure();
-            return null;
-        } finally {
-            tx.finish();
-        }
-        return assoc;
-    }
-
-    private Topic createaGeoCoordinateTopic(double lng, double lat) {
-        DeepaMehtaTransaction tx = dms.beginTx();
-        Topic coordinates = null;
-        try {
-            coordinates = dms.createTopic(new TopicModel(GEO_COORDINATE_TOPIC_URI), null);
-            CompositeValueModel model = new CompositeValueModel();
-            model.put(GEO_LONGITUDE_TYPE_URI, lng);
-            model.put(GEO_LATITUDE_TYPE_URI, lat);
-            coordinates.setCompositeValue(model, null, null);
-            log.info("Created Geo Coordinates .. " + coordinates.toJSON().toString());
-            tx.success();
-        } catch (Exception ex) {
-            tx.failure();
-            log.warning("FAILED to create Geo Coordinate Topic");
-        } finally {
-            tx.finish();
-        }
+    private TopicModel createGeoCoordinateTopicModel(double lng, double lat) {
+        TopicModel coordinates = new TopicModel(GEO_COORDINATE_TOPIC_URI);
+        CompositeValueModel model = new CompositeValueModel();
+        model.put(GEO_LONGITUDE_TYPE_URI, lng);
+        model.put(GEO_LATITUDE_TYPE_URI, lat);
+        coordinates.setCompositeValue(model);
         return coordinates;
     }
 

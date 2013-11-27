@@ -2,10 +2,7 @@ package org.deepamehta.plugins.twitter.migrations;
 
 import de.deepamehta.core.Topic;
 import de.deepamehta.core.TopicType;
-import de.deepamehta.core.model.AssociationModel;
-import de.deepamehta.core.model.SimpleValue;
-import de.deepamehta.core.model.TopicModel;
-import de.deepamehta.core.model.TopicRoleModel;
+import de.deepamehta.core.model.*;
 import de.deepamehta.core.service.Migration;
 import java.util.logging.Logger;
 
@@ -52,6 +49,12 @@ public class Migration2 extends Migration {
     private final static String TWITTER_SEARCH_RESULT_SIZE_URI = "org.deepamehta.twitter.search_result_size";
     private final static String TWITTER_SEARCH_TIME_URI = "org.deepamehta.twitter.last_search_time";
 
+    private final static String GEO_COORDINATE_URI = "dm4.geomaps.geo_coordinate";
+
+    private String COMPOSITION_DEF_EDGE_TYPE = "dm4.core.composition_def";
+    private String ROLE_PARENT_TYPE_URI = "dm4.core.parent_type";
+    private String ROLE_CHILD_TYPE_URI = "dm4.core.child_type";
+
     private final static String DEEPAMEHTA_USERNAME_URI = "dm4.accesscontrol.username";
 
 
@@ -60,15 +63,14 @@ public class Migration2 extends Migration {
     @Override
     public void run() {
 
-        // create "Twitter Research"-Workspace
+        // 1) create "Twitter Research"-Workspace
         TopicModel workspace = new TopicModel(WS_WEB_RESEARCH_URI, "dm4.workspaces.workspace");
         Topic ws = dms.createTopic(workspace, null);
         ws.setSimpleValue("Twitter Research");
-        // assign "admin" username to "Twitter Research"-Workspace
+        // 2) assign "admin" username to "Twitter Research"-Workspace
         Topic administrator = dms.getTopic(DEEPAMEHTA_USERNAME_URI, new SimpleValue("admin"), true);
-        // logger.info("Assigning user \"" + administrator.getSimpleValue() + "\" to new WS: \"Twitter Research\"");
         assignWorkspace(administrator);
-        // assign all Types
+        // 3) assign all types to our new workspace
         TopicType twitterSearchType = dms.getTopicType(TWITTER_SEARCH_URI);
         TopicType searchLang = dms.getTopicType(TWITTER_SEARCH_LANG_URI);
         TopicType searchLocation = dms.getTopicType(TWITTER_SEARCH_LOCATION_URI);
@@ -126,7 +128,10 @@ public class Migration2 extends Migration {
         assignWorkspace(tweetWithheldScope);
         assignWorkspace(tweetWithheldIn);
         assignWorkspace(tweetedToStatusId);
-
+        // 4) Model "Geo Coordinate" to "Tweet"
+        TopicType tweet_type = dms.getTopicType(TWEET_URI);
+        tweet_type.addAssocDef(new AssociationDefinitionModel(
+                COMPOSITION_DEF_EDGE_TYPE, TWEET_URI, GEO_COORDINATE_URI, "dm4.core.one", "dm4.core.one"));
     }
 
     // === Workspace ===

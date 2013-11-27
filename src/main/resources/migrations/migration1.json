@@ -434,7 +434,7 @@
             ]
         },
         {
-            "value": "Withheld Scope (Status or User)",
+            "value": "Tweet Withheld Scope (Status or User)",
             "uri": "org.deepamehta.twitter.tweet_withheld_scope",
             "data_type_uri": "dm4.core.boolean",
             "index_mode_uris": [ "dm4.core.key" ],
