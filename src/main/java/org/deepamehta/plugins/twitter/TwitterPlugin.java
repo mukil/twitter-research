@@ -208,6 +208,7 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
             if (nextPage) {
                 // paging to next-page (query for older-tweets)
                 String nextPageUrl = query.getCompositeValue().getString(TWITTER_SEARCH_NEXT_PAGE_URI);
+                if (nextPageUrl.isEmpty()) throw new RuntimeException("There is no next page. (204)");
                 log.info("Loading next page of tweets => " + TWITTER_SEARCH_BASE_URL + nextPageUrl);
                 requestUri = new URL(TWITTER_SEARCH_BASE_URL + nextPageUrl);
             } else {
