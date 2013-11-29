@@ -197,6 +197,7 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
         URL requestUri = null;
         DeepaMehtaTransaction tx = dms.beginTx();
         try {
+            // 0) Authorize request
             if (!isAuthorized) {
                 authorizeSearchRequests();
                 if (!isAuthorized) {  // check if authorization was sucessfull
@@ -204,39 +205,40 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
                         + "Consider to register your application at https://dev.twitter.com/apps/new."), 500);
                 }
             }
-            log.info("Researching tweets for Twitter-Search (" +query.getId()+ ") next ? " + nextPage);
+            log.fine("Researching tweets for Twitter-Search (" +query.getId()+ ") next ? " + nextPage);
+            // 1) loading search configuration
             if (nextPage) {
                 // paging to next-page (query for older-tweets)
                 String nextPageUrl = query.getCompositeValue().getString(TWITTER_SEARCH_NEXT_PAGE_URI);
                 if (nextPageUrl.isEmpty()) throw new RuntimeException("There is no next page. (204)");
-                log.info("Loading next page of tweets => " + TWITTER_SEARCH_BASE_URL + nextPageUrl);
+                log.fine("Loading next page of tweets => " + TWITTER_SEARCH_BASE_URL + nextPageUrl);
                 requestUri = new URL(TWITTER_SEARCH_BASE_URL + nextPageUrl);
             } else {
                 // refreshing (query for new-tweets)
                 String refreshPageUrl = query.getCompositeValue().getString(TWITTER_SEARCH_REFRESH_URL_URI);
                 requestUri = new URL(TWITTER_SEARCH_BASE_URL + refreshPageUrl);
-                log.info("Loading more recent tweets => " + TWITTER_SEARCH_BASE_URL + refreshPageUrl);
+                log.fine("Loading more recent tweets => " + TWITTER_SEARCH_BASE_URL + refreshPageUrl);
             }
-            log.info("Requesting => " + requestUri.toString());
-            // initiate request
+            log.fine("Requesting => " + requestUri.toString());
+            // 2) initiate request
             HttpURLConnection connection = (HttpURLConnection) requestUri.openConnection();
             connection.setRequestMethod("GET");
             connection.setRequestProperty("User-Agent", "DeepaMehta "+DEEPAMEHTA_VERSION+" - "
                     + "Twitter Research " + TWITTER_RESEARCH_VERSION);
             connection.setRequestProperty("Authorization", "Bearer " + bearerToken);
-            // check the response
+            // 3) check the response
             int httpStatusCode = connection.getResponseCode();
             if (httpStatusCode != HttpURLConnection.HTTP_OK) {
                 throw new WebApplicationException(new Throwable("Error with HTTPConnection."),
                         Status.INTERNAL_SERVER_ERROR);
             }
-            // read in the response
+            // 4) read in the response
             BufferedReader rd = new BufferedReader(new InputStreamReader(connection.getInputStream(), CHARSET));
             for (String input; (input = rd.readLine()) != null;) {
                 resultBody.append(input);
             }
             rd.close();
-            // TODO: Check if answer is something like "403: Too many requests"
+            // 5) process response // TODO: Check if answer is something like "403: Too many requests"
             if (resultBody.toString().isEmpty()) {
                 throw new WebApplicationException(new RuntimeException("Twitter handed just us an empty response."),
                         Status.NO_CONTENT);
@@ -268,8 +270,8 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
      *
      * @param {id}          Twitter Search Topic Id
      * @param {resultType}  "mixed", "recent", "popular"
-     * @param {lang}        ISO-639-1 Code (2 chars)
-     * @param {location}    "lat,lng,radiuskm"
+     * @param {lang}        ISO-639-1 Code (2 chars) (optional)
+     * @param {location}    "lat,lng,radiuskm" (optional)
      */
 
     @GET
@@ -282,6 +284,7 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
         StringBuffer resultBody = new StringBuffer();
         DeepaMehtaTransaction tx = dms.beginTx();
         try {
+            // 0) Authorize request
             if (!isAuthorized) {
                 authorizeSearchRequests();
                 if (!isAuthorized) {  // check if authorization was sucessfull
@@ -289,32 +292,31 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
                         + "Consider to register your application at https://dev.twitter.com/apps/new."), 500);
                 }
             }
-            // setup search container
+            // 1) setup search container
             Topic twitterSearch = dms.getTopic(searchId, true);
             log.fine("Resarching Public Tweets " +query+ " (" +resultType+ ") "
                     + "in language: " + lang + " near loc: " + location);
-            // construct search query
+            // 2) construct search query
             String queryUrl = TWITTER_SEARCH_BASE_URL + "?q=" + URLEncoder.encode(query.toString(), CHARSET)
                     + ";&include_entities=true;&result_type=" + resultType + ";"; // ;&rpp=" + querySize + "
-            // fixme: set lang (if not provided to "") that makes API more usable
+            if (lang == null) lang = "";
+            if (location == null) location = "";
             if (!lang.isEmpty() && !lang.equals("unspecified")) queryUrl += "&lang="+lang+";";
             if (!location.isEmpty() && !location.equals("none")) queryUrl += "&geocode="+location+";";
             URL requestUri = new URL(queryUrl);
-            log.fine("Requesting: " + requestUri.toString());
-
-            // initiate request
+            // 3) initiate request
             HttpURLConnection connection = (HttpURLConnection) requestUri.openConnection();
             connection.setRequestMethod("GET");
             connection.setRequestProperty("User-Agent", "DeepaMehta "+DEEPAMEHTA_VERSION+" - "
                     + "Twitter Research " + TWITTER_RESEARCH_VERSION);
             connection.setRequestProperty("Authorization", "Bearer " + bearerToken);
-            // check the response
+            // 4) check the response
             int httpStatusCode = connection.getResponseCode();
             if (httpStatusCode != HttpURLConnection.HTTP_OK) {
                 throw new WebApplicationException(new Throwable("Error with HTTPConnection."),
                         Status.INTERNAL_SERVER_ERROR);
             }
-            // read in the response
+            // 5) process response
 			BufferedReader rd = new BufferedReader(new InputStreamReader(connection.getInputStream(), CHARSET));
             for (String input; (input = rd.readLine()) != null;) {
                 resultBody.append(input);
@@ -435,7 +437,6 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
                 if (place.has("bounding_box")) {
                     JSONObject box = place.getJSONObject("bounding_box");
                     JSONArray tudes = box.getJSONArray("coordinates");
-                    log.info("Tweet has a PLACE instead of Coordinates => " + tudes.toString());
                     // first value in array is always longitude
                     JSONArray container = tudes.getJSONArray(0);
                     JSONArray lower_left = container.getJSONArray(0);
@@ -452,7 +453,7 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
                 JSONObject coordinates = item.getJSONObject("coordinates");
                 if (coordinates.has("coordinates")) {
                     JSONArray tudes = coordinates.getJSONArray("coordinates");
-                    log.info("Writing coordinates over PLACE..");
+                    log.fine("Writing coordinates OVER place..");
                     coordinate = createGeoCoordinateTopicModel(tudes.getDouble(0), tudes.getDouble(1));
                 }
             }
@@ -481,7 +482,6 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
             topic.setCompositeValue(content);
             if (coordinate != null) {
                 content.put(GEO_COORDINATE_TOPIC_URI, coordinate.getCompositeValueModel());
-                log.info("Created Geo Coordinates => " + coordinate.toJSON().toString());
             }
             tweet = dms.createTopic(topic, clientState);
             tx.success();
@@ -507,7 +507,7 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
             tx.success();
         } catch (Exception ex) {
             log.info("Crashed query for twitter-id topic, trying to create new Twitter User Topic");
-            throw new RuntimeException(ex.getMessage());
+            throw new RuntimeException(ex);
         } finally {
             tx.finish();
         }
