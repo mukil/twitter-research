@@ -3,14 +3,10 @@ package org.deepamehta.plugins.twitter;
 import com.sun.jersey.core.util.Base64;
 import de.deepamehta.core.Association;
 import de.deepamehta.core.RelatedTopic;
-import de.deepamehta.core.ResultSet;
 import de.deepamehta.core.Topic;
 import de.deepamehta.core.model.*;
 import de.deepamehta.core.osgi.PluginActivator;
-import de.deepamehta.core.service.ClientState;
-import de.deepamehta.core.service.Directives;
-import de.deepamehta.core.service.Plugin;
-import de.deepamehta.core.service.PluginService;
+import de.deepamehta.core.service.*;
 import de.deepamehta.core.service.annotation.ConsumesService;
 import de.deepamehta.core.storage.spi.DeepaMehtaTransaction;
 import de.deepamehta.plugins.accesscontrol.model.ACLEntry;
@@ -26,6 +22,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.sql.ResultSet;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.logging.Logger;
@@ -536,8 +533,8 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
 
     private void checkACLsOfMigration() {
         // secrets
-        ResultSet<RelatedTopic> secrets = dms.getTopics("org.deepamehta.twitter.secret", false, 0);
-        Iterator<RelatedTopic> secs = secrets.getIterator();
+        ResultList<RelatedTopic> secrets = dms.getTopics("org.deepamehta.twitter.secret", false, 0);
+        Iterator<RelatedTopic> secs = secrets.iterator();
         while (secs.hasNext()) {
             RelatedTopic secret = secs.next();
             DeepaMehtaTransaction dmx = dms.beginTx();
@@ -561,8 +558,8 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
             }
         }
         // keys
-        ResultSet<RelatedTopic> keys = dms.getTopics("org.deepamehta.twitter.key", false, 0);
-        Iterator<RelatedTopic> ks = keys.getIterator();
+        ResultList<RelatedTopic> keys = dms.getTopics("org.deepamehta.twitter.key", false, 0);
+        Iterator<RelatedTopic> ks = keys.iterator();
         while (ks.hasNext()) {
             RelatedTopic key = ks.next();
             DeepaMehtaTransaction dmx = dms.beginTx();
