@@ -7,8 +7,8 @@ import de.deepamehta.core.service.PluginService;
 /**
  * A basic service for the public Twitter Search API and DeepaMehta 4.
  *
- * @version 1.2
  * @author Malte Reißig (<malte@mikromedia.de>)
+ * @version 1.3.0-SNAPSHOT
  * @website https://github.com/mukil/twitter-research
  *
  */

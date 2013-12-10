@@ -73,6 +73,10 @@ The "Twitter User" icon used in this application is "Free for commercial use" an
 
 # History
 
+1.3.0-SNAPSHOT, Dec 09, 2013
+
+- Upgraded to be compatible with DM 4.1.3
+
 1.2, Sep 24, 2013
 
 - implemented a Client Credentials Grant of OAuth2

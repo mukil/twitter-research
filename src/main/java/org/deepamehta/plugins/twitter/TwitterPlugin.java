@@ -1,12 +1,16 @@
 package org.deepamehta.plugins.twitter;
 
 import com.sun.jersey.core.util.Base64;
-import de.deepamehta.core.Association;
 import de.deepamehta.core.RelatedTopic;
 import de.deepamehta.core.Topic;
-import de.deepamehta.core.model.*;
+import de.deepamehta.core.model.CompositeValueModel;
+import de.deepamehta.core.model.SimpleValue;
+import de.deepamehta.core.model.TopicModel;
 import de.deepamehta.core.osgi.PluginActivator;
-import de.deepamehta.core.service.*;
+import de.deepamehta.core.service.ClientState;
+import de.deepamehta.core.service.Directives;
+import de.deepamehta.core.service.PluginService;
+import de.deepamehta.core.service.ResultList;
 import de.deepamehta.core.service.annotation.ConsumesService;
 import de.deepamehta.core.storage.spi.DeepaMehtaTransaction;
 import de.deepamehta.plugins.accesscontrol.model.ACLEntry;
@@ -22,7 +26,6 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.sql.ResultSet;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.logging.Logger;
@@ -37,8 +40,8 @@ import org.deepamehta.plugins.twitter.service.TwitterService;
  * A very basic client for researching with the public Twitter Search API v1.1 and DeepaMehta 4.1.2
  *
  * @author Malte Reißig (<malte@mikromedia.de>)
+ * @version 1.3.0-SNAPSHOT
  * @website https://github.com/mukil/twitter-research
- * @version 1.3-SNAPSHOT
  *
  */
 
@@ -49,8 +52,8 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
 
     private Logger log = Logger.getLogger(getClass().getName());
 
-    private final String DEEPAMEHTA_VERSION = "DeepaMehta 4.1.2";
-    private final String TWITTER_RESEARCH_VERSION = "1.3-SNAPSHOT";
+    private final String DEEPAMEHTA_VERSION = "DeepaMehta 4.1.3-SNAPSHOT";
+    private final String TWITTER_RESEARCH_VERSION = "1.3.0-SNAPSHOT";
     private final String CHARSET = "UTF-8";
 
     private final static String CHILD_URI = "dm4.core.child";
@@ -102,7 +105,6 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
 
 
     /** Initialize the migrated soundsets ACL-Entries. */
-    @Override
     public void init() {
         isInitialized = true;
         configureIfReady();
@@ -540,7 +542,7 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
             DeepaMehtaTransaction dmx = dms.beginTx();
             try {
                 if (acService.getCreator(secret) == null) {
-                    log.fine("initial ACL update of twitter secret topics " + secret.getSimpleValue().toString());
+                    log.fine("Running initial ACL update of twitter secret topics " + secret.getSimpleValue().toString());
                     Topic admin = acService.getUsername("admin");
                     String adminName = admin.getSimpleValue().toString();
                     acService.setCreator(secret, adminName);
@@ -565,7 +567,7 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
             DeepaMehtaTransaction dmx = dms.beginTx();
             try {
                 if (acService.getCreator(key) == null) {
-                    log.fine("initial ACL update of twitter key topics " + key.getSimpleValue().toString());
+                    log.fine("Running initial ACL update of twitter key topics " + key.getSimpleValue().toString());
                     Topic admin = acService.getUsername("admin");
                     String adminName = admin.getSimpleValue().toString();
                     acService.setCreator(key, adminName);
