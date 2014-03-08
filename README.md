@@ -1,7 +1,7 @@
 
 # DeepaMehta 4 Twitter Research Plugin
 
-This plugin allows users of DeepaMehta (4.1.2) to [query](https://dev.twitter.com/docs/using-search) [Twitters Public Search API v1.1.](https://dev.twitter.com/docs/api/1.1/get/search/tweets) and start qualitative research around events based on the messages sent by users of twitter.com. This plugin basically wraps all meaningful options of the API (e.g. Language, Location and Query-Input). The "Twitter Search"-Topic enables to "Load More Tweets" (paging) and to "Refresh Search" loading new tweets (since last query).
+This plugin allows users of DeepaMehta to [query](https://dev.twitter.com/docs/using-search) [Twitters Public Search API v1.1.](https://dev.twitter.com/docs/api/1.1/get/search/tweets) and start qualitative research around events based on the messages sent by users of twitter.com. This plugin basically wraps all meaningful options of the API (e.g. Language, Location and Query-Input). The "Twitter Search"-Topic enables to "Load More Tweets" (paging) and to "Refresh Search" loading new tweets (since last query).
 
 
 ## Download
@@ -72,6 +72,10 @@ The "Twitter User" icon used in this application is "Free for commercial use" an
 
 
 # History
+
+1.3.1, Mar 08 2014
+
+- Release compatible with DM 4.2
 
 1.3.0, Mar 08 2014
 
