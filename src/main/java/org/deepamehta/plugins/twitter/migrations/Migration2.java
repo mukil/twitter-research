@@ -8,11 +8,11 @@ import java.util.logging.Logger;
 
 
 /**
- * A basic wrapper for the public Twitter Search API and DeepaMehta 4.
+ * A very basic client for researching the public Twitter Search API v1.1 with DeepaMehta 4.
  *
- * @version 1.2
+ * @version 1.3.2-SNAPSHOT
  * @author Malte Reißig (<malte@mikromedia.de>)
- * @website http://github.com/mukil
+ * @website https://github.com/mukil/twitter-research
  *
  */
 

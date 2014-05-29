@@ -5,10 +5,10 @@ import de.deepamehta.core.service.ClientState;
 import de.deepamehta.core.service.PluginService;
 
 /**
- * A basic service for the public Twitter Search API and DeepaMehta 4.
+ * A very basic client for researching the public Twitter Search API v1.1 with DeepaMehta 4.
  *
  * @author Malte Reißig (<malte@mikromedia.de>)
- * @version 1.3.0-SNAPSHOT
+ * @version 1.3.2-SNAPSHOT
  * @website https://github.com/mukil/twitter-research
  *
  */

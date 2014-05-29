@@ -37,10 +37,10 @@ import org.codehaus.jettison.json.JSONObject;
 import org.deepamehta.plugins.twitter.service.TwitterService;
 
 /**
- * A very basic client for researching with the public Twitter Search API v1.1 and DeepaMehta 4.1.2
+ * A very basic client for researching the public Twitter Search API v1.1 with DeepaMehta 4.
  *
  * @author Malte Reißig (<malte@mikromedia.de>)
- * @version 1.3.0-SNAPSHOT
+ * @version 1.3.2-SNAPSHOT
  * @website https://github.com/mukil/twitter-research
  *
  */
