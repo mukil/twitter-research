@@ -70,7 +70,10 @@ The "Twitter User" icon used in this application is "Free for commercial use" an
 
 ## History
 
-**1.3.2**, Upcoming
+**1.3.3**, Upcoming
+- Compatible with DeepaMehta 4.4
+
+**1.3.2**, Nov 17, 2014 
 - Compatible with DeepaMehta 4.3
 
 **1.3.1**, Mar 08 2014
