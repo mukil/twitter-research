@@ -13,7 +13,7 @@ Copy the downloaded `twitter-research-1.X.jar` file into your DeepaMehta bundle 
 
 ## Usage
 
-The Twitter Research Plugin has to rely on [Twitter Application-only authentication](https://dev.twitter.com/docs/auth/application-only-auth), which makes it necessary that you register your application scenario ([where this thread might prove helpful](https://dev.twitter.com/discussions/631)) and hand over the consumer key and secret to your plugin installation.
+The Twitter Research Plugin has to rely on [Twitter Application-only authentication](https://dev.twitter.com/docs/auth/application-only-auth), which makes it necessary that you register your application scenario ([where this thread might prove helpful](https://dev.twitter.com/discussions/631)) and hand over the consumer key and secret to your plugin installation. After being logged-in/registered at twitter.com you can do so [here](https://apps.twitter.com/app/new).
 
 You must do so by revealing and editing 2 specific topics. You find those two topics via the DeepaMehta Toolbar and clicking (1) "Search" -> "By Type" -> "Twitter Secret" and (2) "Search" -> "By Type" -> "Twitter Key" and then revealing the respective (and only) search results for each of the searches. 
 

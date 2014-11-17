@@ -40,7 +40,7 @@ import org.deepamehta.plugins.twitter.service.TwitterService;
  * A very basic client for researching the public Twitter Search API v1.1 with DeepaMehta 4.
  *
  * @author Malte Reißig (<malte@mikromedia.de>)
- * @version 1.3.2-SNAPSHOT
+ * @version 1.3.2
  * @website https://github.com/mukil/twitter-research
  *
  */
@@ -245,8 +245,9 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
                 processTwitterSearchResponse(query, resultBody, clientState);
             }
             tx.success();
-            // update modification timestamp on parent (composite) topic to invalidate http caching
-            dms.updateTopic(new TopicModel(query.getId()), clientState);
+            // update modification timestamp on parent (composite) topic 
+            // to invalidate http caching (see also #510)
+            dms.updateTopic(new TopicModel(query.getId(), query.getCompositeValue().getModel()), clientState);
         } catch (TwitterAPIException ex) {
             log.warning("TwitterApiException " + ex.getMessage());
             throw new WebApplicationException(new Throwable(ex.getMessage()), ex.getStatus());
@@ -316,7 +317,7 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
                         Status.INTERNAL_SERVER_ERROR);
             }
             // 5) process response
-			BufferedReader rd = new BufferedReader(new InputStreamReader(connection.getInputStream(), CHARSET));
+            BufferedReader rd = new BufferedReader(new InputStreamReader(connection.getInputStream(), CHARSET));
             for (String input; (input = rd.readLine()) != null;) {
                 resultBody.append(input);
             }
@@ -328,6 +329,9 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
                 processTwitterSearchResponse(twitterSearch, resultBody, clientState);
             }
             tx.success();
+            // looks like https://trac.deepamehta.de/ticket/510 is not yet solved 
+            // update modification timestamp on parent (composite) topic to invalidate http caching
+            dms.updateTopic(new TopicModel(twitterSearch.getId()), clientState);
             return twitterSearch;
         } catch (TwitterAPIException ex) {
             throw new WebApplicationException(new Throwable(ex.getMessage()), ex.getStatus());
