@@ -10,7 +10,7 @@ import java.util.logging.Logger;
 /**
  * A very basic client for researching the public Twitter Search API v1.1 with DeepaMehta 4.
  *
- * @version 1.3.2-SNAPSHOT
+ * @version 1.3.3-SNAPSHOT
  * @author Malte Reißig (<malte@mikromedia.de>)
  * @website https://github.com/mukil/twitter-research
  *
@@ -65,10 +65,10 @@ public class Migration2 extends Migration {
 
         // 1) create "Twitter Research"-Workspace
         TopicModel workspace = new TopicModel(WS_WEB_RESEARCH_URI, "dm4.workspaces.workspace");
-        Topic ws = dms.createTopic(workspace, null);
+        Topic ws = dms.createTopic(workspace);
         ws.setSimpleValue("Twitter Research");
         // 2) assign "admin" username to "Twitter Research"-Workspace
-        Topic administrator = dms.getTopic(DEEPAMEHTA_USERNAME_URI, new SimpleValue("admin"), true);
+        Topic administrator = dms.getTopic(DEEPAMEHTA_USERNAME_URI, new SimpleValue("admin"));
         assignWorkspace(administrator);
         // 3) assign all types to our new workspace
         TopicType twitterSearchType = dms.getTopicType(TWITTER_SEARCH_URI);
@@ -137,11 +137,11 @@ public class Migration2 extends Migration {
     // === Workspace ===
 
     private void assignWorkspace(Topic topic) {
-        Topic defaultWorkspace = dms.getTopic("uri", new SimpleValue(WS_WEB_RESEARCH_URI), false);
+        Topic defaultWorkspace = dms.getTopic("uri", new SimpleValue(WS_WEB_RESEARCH_URI));
         dms.createAssociation(new AssociationModel("dm4.core.aggregation",
             new TopicRoleModel(topic.getId(), "dm4.core.parent"),
             new TopicRoleModel(defaultWorkspace.getId(), "dm4.core.child")
-        ), null);
+        ));
     }
 
 }

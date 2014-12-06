@@ -10,12 +10,12 @@ dm4c.add_multi_renderer('org.deepamehta.twitter.tweet_multi_renderer', {
             if (item != undefined) {
                 if (item.id != -1) {
                     var username = ""
-                    if (item.composite.hasOwnProperty('org.deepamehta.twitter.user')) {
-                        username = item.composite['org.deepamehta.twitter.user'].composite['org.deepamehta.twitter.user_name'].value
+                    if (item.childs.hasOwnProperty('org.deepamehta.twitter.user')) {
+                        username = item.childs['org.deepamehta.twitter.user'].childs['org.deepamehta.twitter.user_name'].value
                     }
                     var timestamp = ""
-                    if (item.composite.hasOwnProperty('org.deepamehta.twitter.tweet_time')) {
-                        timestamp = item.composite['org.deepamehta.twitter.tweet_time'].value
+                    if (item.childs.hasOwnProperty('org.deepamehta.twitter.tweet_time')) {
+                        timestamp = item.childs['org.deepamehta.twitter.tweet_time'].value
                     }
                     var text = ""
                     if (item.hasOwnProperty('value')) {
@@ -37,12 +37,12 @@ dm4c.add_multi_renderer('org.deepamehta.twitter.tweet_multi_renderer', {
         function sort_page_models() {
             page_models.sort(function(pm_1, pm_2) {
                 var val_1 = 0
-                if (pm_1.object.composite.hasOwnProperty('org.deepamehta.twitter.tweet_time')) {
-                    val_1 = pm_1.object.composite['org.deepamehta.twitter.tweet_time'].value
+                if (pm_1.object.childs.hasOwnProperty('org.deepamehta.twitter.tweet_time')) {
+                    val_1 = pm_1.object.childs['org.deepamehta.twitter.tweet_time'].value
                 }
                 var val_2 = 0
-                if (pm_2.object.composite.hasOwnProperty('org.deepamehta.twitter.tweet_time')) {
-                    val_2 = pm_2.object.composite['org.deepamehta.twitter.tweet_time'].value
+                if (pm_2.object.childs.hasOwnProperty('org.deepamehta.twitter.tweet_time')) {
+                    val_2 = pm_2.object.childs['org.deepamehta.twitter.tweet_time'].value
                 }
                 if (val_1 > val_2) // sort string descending
                     return -1
