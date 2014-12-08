@@ -109,6 +109,7 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
 
 
     /** Initialize the migrated soundsets ACL-Entries. */
+    @Override
     public void init() {
         isInitialized = true;
         configureIfReady();
@@ -183,9 +184,10 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
      *  (a) fetch more (older) tweets for the same query or
      *  (b) fetch new tweets and assign them to the current search result
      *
-     *  @param {searchId}   id of the "Twitter-Search"-Topic to operate on
-     *  @param {nextPage}   <code>true</code> for paging query to next page;
-     *                      <code>false</code> for fetching most recent tweets
+     *  @param  searchId        id of the "Twitter-Search"-Topic to operate on
+     *  @param  nextPage        <code>true</code> for paging query to next page;
+     *                          <code>false</code> for fetching most recent tweets
+     *  @return                 Twitter Search Bucket
      */
 
     @GET
@@ -251,13 +253,12 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
             dms.updateTopic(new TopicModel(query.getId(), query.getChildTopics().getModel()));
             query.loadChildTopics(); // load all child topics
         } catch (TwitterAPIException ex) {
-            log.warning("TwitterApiException " + ex.getMessage());
-            throw new WebApplicationException(new Throwable(ex.getMessage()), ex.getStatus());
+            throw new RuntimeException("TwitterApiException", ex);
         } catch (MalformedURLException e) {
             throw new RuntimeException("Could not trigger existing search-topic.", e);
         } catch (IOException ioe) {
-            throw new WebApplicationException(new Throwable("Most probably we made a mistake in constructing the query. "
-                    + "We're sorry, please try again."), Status.BAD_REQUEST);
+            throw new RuntimeException("Most probably we made a mistake in constructing the query. "
+                    + "We're sorry, please try again.", ioe);
         }
         return query;
     }
@@ -268,10 +269,11 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
      * Fetches public tweets matching the given <code>query</code>, maintains a search-query topic and
      * references existing tweets and users, as it should be.
      *
-     * @param {id}          Twitter Search Topic Id
-     * @param {resultType}  "mixed", "recent", "popular"
-     * @param {lang}        ISO-639-1 Code (2 chars) (optional)
-     * @param {location}    "lat,lng,radiuskm" (optional)
+     * @param   searchId        Twitter Search Topic Id
+     * @param   resultType      "mixed", "recent", "popular"
+     * @param   lang            ISO-639-1 Code (2 chars) (optional)
+     * @param   location        "lat,lng,radiuskm" (optional)
+     * @return                  Twitter Search Bucket
      */
 
     @GET
@@ -313,8 +315,7 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
             // 4) check the response
             int httpStatusCode = connection.getResponseCode();
             if (httpStatusCode != HttpURLConnection.HTTP_OK) {
-                throw new WebApplicationException(new Throwable("Error with HTTPConnection."),
-                        Status.INTERNAL_SERVER_ERROR);
+                throw new RuntimeException("Error with HTTPConnection: " + httpStatusCode);
             }
             // 5) process response
             BufferedReader rd = new BufferedReader(new InputStreamReader(connection.getInputStream(), CHARSET));
@@ -334,9 +335,9 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
             twitterSearch.loadChildTopics(); // load all child topics
             return twitterSearch;
         } catch (TwitterAPIException ex) {
-            throw new WebApplicationException(new Throwable(ex.getMessage()), ex.getStatus());
+            throw new RuntimeException("Twitter API Exception", ex);
         } catch (IOException e) {
-            throw new WebApplicationException(new RuntimeException("HTTP I/O Error", e));
+            throw new RuntimeException("HTTP I/O Error", e);
         }
     }
 
