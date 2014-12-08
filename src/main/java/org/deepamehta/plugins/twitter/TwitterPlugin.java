@@ -54,6 +54,7 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
     private final String DEEPAMEHTA_VERSION = "DeepaMehta 4.4";
     private final String TWITTER_RESEARCH_VERSION = "1.3.3-SNAPSHOT";
     private final String CHARSET = "UTF-8";
+    private final String TWITTER_WORKSPACE_URI = "org.deepamehta.workspaces.twitter";
 
     private final static String CHILD_URI = "dm4.core.child";
     private final static String PARENT_URI = "dm4.core.parent";
