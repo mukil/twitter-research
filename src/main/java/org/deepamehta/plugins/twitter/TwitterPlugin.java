@@ -1,21 +1,16 @@
 package org.deepamehta.plugins.twitter;
 
 import com.sun.jersey.core.util.Base64;
-import de.deepamehta.core.RelatedTopic;
+import de.deepamehta.accesscontrol.AccessControlService;
 import de.deepamehta.core.Topic;
 import de.deepamehta.core.model.ChildTopicsModel;
 import de.deepamehta.core.model.SimpleValue;
 import de.deepamehta.core.model.TopicModel;
 import de.deepamehta.core.osgi.PluginActivator;
 import de.deepamehta.core.service.Inject;
-import de.deepamehta.core.service.ResultList;
 import de.deepamehta.core.service.Transactional;
 import de.deepamehta.core.storage.spi.DeepaMehtaTransaction;
-import de.deepamehta.plugins.accesscontrol.model.ACLEntry;
-import de.deepamehta.plugins.accesscontrol.model.AccessControlList;
-import de.deepamehta.plugins.accesscontrol.model.Operation;
-import de.deepamehta.plugins.accesscontrol.model.UserRole;
-import de.deepamehta.plugins.accesscontrol.service.AccessControlService;
+import de.deepamehta.workspaces.WorkspacesService;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -26,6 +21,7 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.logging.Logger;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -33,7 +29,6 @@ import javax.ws.rs.core.Response.Status;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
-import org.deepamehta.plugins.twitter.service.TwitterService;
 
 /**
  * A very basic client for researching the public Twitter Search API v1.1 with DeepaMehta 4.
@@ -104,10 +99,9 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
     private boolean isAuthorized = false;
     private String bearerToken = null;
     
-    @Inject
-    private AccessControlService acService = null;
-
-
+    /** Used in migration. */
+    @Inject private WorkspacesService wsService = null;
+    @Inject private AccessControlService acService = null;
 
     /** Initialize the migrated soundsets ACL-Entries. */
     @Override
@@ -123,8 +117,8 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
     }
 
     private void authorizeSearchRequests () throws TwitterAPIException {
-        Topic applicationKey  = dms.getTopic("uri", new SimpleValue(TWITTER_APPLICATION_KEY));
-        Topic applicationSecret  = dms.getTopic("uri", new SimpleValue(TWITTER_APPLICATION_SECRET));
+        Topic applicationKey  = dm4.getTopicByUri(TWITTER_APPLICATION_KEY);
+        Topic applicationSecret  = dm4.getTopicByUri(TWITTER_APPLICATION_SECRET);
         try {
             StringBuilder resultBody = new StringBuilder();
             URL requestUri = new URL(TWITTER_AUTHENTICATION_URL);
@@ -197,7 +191,7 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
     @Transactional
     public Topic searchMoreTweets(@PathParam("id") long searchId, @PathParam("nextPage") boolean nextPage) {
 
-        Topic query = dms.getTopic(searchId);
+        Topic query = dm4.getTopic(searchId);
         StringBuffer resultBody = new StringBuffer();
         URL requestUri = null;
         try {
@@ -251,7 +245,7 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
             }
             // update modification timestamp on parent (composite) topic 
             // to invalidate http caching (see also #510)
-            dms.updateTopic(new TopicModel(query.getId(), query.getChildTopics().getModel()));
+            dm4.updateTopic(mf.newTopicModel(query.getId(), query.getChildTopics().getModel()));
             query.loadChildTopics(); // load all child topics
         } catch (TwitterAPIException ex) {
             throw new RuntimeException("TwitterApiException", ex);
@@ -296,7 +290,7 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
                 }
             }
             // 1) setup search container
-            Topic twitterSearch = dms.getTopic(searchId);
+            Topic twitterSearch = dm4.getTopic(searchId);
             log.fine("Resarching Public Tweets " +query+ " (" +resultType+ ") "
                     + "in language: " + lang + " near loc: " + location);
             // 2) construct search query
@@ -332,7 +326,7 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
             }
             // looks like https://trac.deepamehta.de/ticket/510 is not yet solved 
             // update modification timestamp on parent (composite) topic to invalidate http caching
-            dms.updateTopic(new TopicModel(twitterSearch.getId()));
+            dm4.updateTopic(mf.newTopicModel(twitterSearch.getId()));
             twitterSearch.loadChildTopics(); // load all child topics
             return twitterSearch;
         } catch (TwitterAPIException ex) {
@@ -364,16 +358,15 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
                 // gets an existing or creates a new "Tweet"-Topic
                 Topic tweet = getTweet(item, twitterUser.getId());
                 // associate "Tweet" with "Twitter User" fixme: check if there's already an association
-                twitterSearch.setChildTopics(new ChildTopicsModel().addRef(TWEET_URI, tweet.getId()));
+                twitterSearch.setChildTopics(mf.newChildTopicsModel().addRef(TWEET_URI, tweet.getId()));
                 // old style association
-                /* dms.createAssociation(new AssociationModel(SEARCH_RESULT,
+                /* dm4.createAssociation(new AssociationModel(SEARCH_RESULT,
                         new TopicRoleModel(searchId, DEFAULT_URI),
                         new TopicRoleModel(tweet.getId(), DEFAULT_URI)), clientState); **/
             }
 
             // get current (overall) result size
-            int size = twitterSearch.getRelatedTopics(AGGREGATION, PARENT_URI, CHILD_URI, TWEET_URI, 0)
-                    .getTotalCount();
+            int size = twitterSearch.getRelatedTopics(AGGREGATION, PARENT_URI, CHILD_URI, TWEET_URI).size();
             // update our "Twitter Search"-Topic to reflect results after latest query
             String nextPage = "", maxTweetId = "", refreshUrl = "";
             JSONObject search_metadata;
@@ -398,9 +391,9 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
 
     private Topic getTweet(JSONObject item, long userTopicId) {
         Topic tweet = null;
-        DeepaMehtaTransaction tx = dms.beginTx();
+        DeepaMehtaTransaction tx = dm4.beginTx();
         try {
-            Topic tweetId = dms.getTopic(TWEET_ID_URI, new SimpleValue(item.getString("id_str")));
+            Topic tweetId = dm4.getTopicByValue(TWEET_ID_URI, new SimpleValue(item.getString("id_str")));
             if (tweetId != null) {
                 tweet = tweetId.getRelatedTopic(COMPOSITION, CHILD_URI, PARENT_URI, TWEET_URI);
             } else {
@@ -420,7 +413,7 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
         Topic tweet = null;
         try {
             // find twitter's doc on a tweets fields (https://dev.twitter.com/docs/platform-objects/tweets)
-            TopicModel topic = new TopicModel(TWEET_URI);
+            TopicModel topic = mf.newTopicModel(TWEET_URI);
             TopicModel coordinate = null;
             String inReplyToStatus = "", withheldCopyright = "",
                     withheldInCountries = "", withheldScope = "", metadata = "", entities = "";
@@ -458,7 +451,7 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
             if (item.has("favorite_count")) favourite_count = item.getInt("favorite_count");
             if (item.has("place") && !item.isNull("place")) metadata = item.getJSONObject("place").toString();
             if (item.has("entities") && !item.isNull("entities")) entities = item.getJSONObject("entities").toString();
-            ChildTopicsModel content = new ChildTopicsModel()
+            ChildTopicsModel content = mf.newChildTopicsModel()
                 .put(TWEET_CONTENT_URI, item.getString("text"))
                 .put(TWEET_TIME_URI, item.getString("created_at")) // is utc-time
                 .put(TWEET_ID_URI, item.getString("id_str"))
@@ -476,7 +469,7 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
             if (coordinate != null) {
                 content.put(GEO_COORDINATE_TOPIC_URI, coordinate.getChildTopicsModel());
             }
-            tweet = dms.createTopic(topic);
+            tweet = dm4.createTopic(topic);
         } catch (JSONException jex) {
             throw new RuntimeException(jex.getMessage());
         }
@@ -485,10 +478,10 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
 
     private Topic getTwitterUser(String userId, String userName, String userImageUrl) {
         Topic identity = null;
-        DeepaMehtaTransaction tx = dms.beginTx();
+        DeepaMehtaTransaction tx = dm4.beginTx();
         try {
             if (userId == null) throw new RuntimeException("Search Result is invalid. Missing Twitter-User-Id");
-            Topic twitterId = dms.getTopic(TWITTER_USER_ID_URI, new SimpleValue(userId));
+            Topic twitterId = dm4.getTopicByValue(TWITTER_USER_ID_URI, new SimpleValue(userId));
             if (twitterId != null) {
                 identity = twitterId.getRelatedTopic(COMPOSITION, CHILD_URI, PARENT_URI, TWITTER_USER_URI);
             } else {
@@ -505,17 +498,17 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
     }
 
     private Topic createTwitterUser(String userId, String userName, String userImageUrl) {
-        TopicModel twitterUser = new TopicModel(TWITTER_USER_URI);
-        twitterUser.setChildTopicsModel(new ChildTopicsModel()
+        TopicModel twitterUser = mf.newTopicModel(TWITTER_USER_URI);
+        twitterUser.setChildTopicsModel(mf.newChildTopicsModel()
                 .put(TWITTER_USER_ID_URI, userId)
                 .put(TWITTER_USER_NAME_URI, userName)
                 .put(TWITTER_USER_IMAGE_URI, userImageUrl));
-        return dms.createTopic(twitterUser);
+        return dm4.createTopic(twitterUser);
     }
 
     private TopicModel createGeoCoordinateTopicModel(double lng, double lat) {
-        TopicModel coordinates = new TopicModel(GEO_COORDINATE_TOPIC_URI);
-        ChildTopicsModel model = new ChildTopicsModel();
+        TopicModel coordinates = mf.newTopicModel(GEO_COORDINATE_TOPIC_URI);
+        ChildTopicsModel model = mf.newChildTopicsModel();
         model.put(GEO_LONGITUDE_TYPE_URI, lng);
         model.put(GEO_LATITUDE_TYPE_URI, lat);
         coordinates.setChildTopicsModel(model);
@@ -526,21 +519,18 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
 
     private void checkACLsOfMigration() {
         // secrets
-        ResultList<RelatedTopic> secrets = dms.getTopics("org.deepamehta.twitter.secret", 0);
-        Iterator<RelatedTopic> secs = secrets.iterator();
+        List<Topic> secrets = dm4.getTopicsByType("org.deepamehta.twitter.secret");
+        Iterator<Topic> secs = secrets.iterator();
         while (secs.hasNext()) {
-            RelatedTopic secret = secs.next();
-            DeepaMehtaTransaction dmx = dms.beginTx();
+            Topic secret = secs.next();
+            DeepaMehtaTransaction dmx = dm4.beginTx();
+            // ### Gave user "admin" WRITE permission on twitter secret topic
             try {
-                if (acService.getCreator(secret) == null) {
+                /** if (acService.getCreator(secret) == null) {
                     log.fine("Running initial ACL update of twitter secret topics " + secret.getSimpleValue().toString());
-                    Topic admin = acService.getUsername("admin");
+                    Topic admin = acService.getUsernameTopic("admin");
                     String adminName = admin.getSimpleValue().toString();
-                    acService.setCreator(secret, adminName);
-                    acService.setOwner(secret, adminName);
-                    acService.setACL(secret, new AccessControlList( //
-                            new ACLEntry(Operation.WRITE, UserRole.OWNER)));
-                }
+                } */
                 dmx.success();
             } catch (Exception ex) {
                 log.warning(ex.getMessage());
@@ -549,22 +539,19 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
                 dmx.finish();
             }
         }
-        // keys
-        ResultList<RelatedTopic> keys = dms.getTopics("org.deepamehta.twitter.key", 0);
-        Iterator<RelatedTopic> ks = keys.iterator();
+        // ### Gave user "admin" WRITE permission on twitter key topic
+        List<Topic> keys = dm4.getTopicsByType("org.deepamehta.twitter.key");
+        Iterator<Topic> ks = keys.iterator();
         while (ks.hasNext()) {
-            RelatedTopic key = ks.next();
-            DeepaMehtaTransaction dmx = dms.beginTx();
+            Topic key = ks.next();
+            DeepaMehtaTransaction dmx = dm4.beginTx();
             try {
-                if (acService.getCreator(key) == null) {
+                /* if (acService.getCreator(key) == null) {
                     log.fine("Running initial ACL update of twitter key topics " + key.getSimpleValue().toString());
-                    Topic admin = acService.getUsername("admin");
+                    Topic admin = acService.getUsernameTopic("admin");
                     String adminName = admin.getSimpleValue().toString();
-                    acService.setCreator(key, adminName);
-                    acService.setOwner(key, adminName);
-                    acService.setACL(key, new AccessControlList( //
-                            new ACLEntry(Operation.WRITE, UserRole.OWNER)));
-                }
+
+                } **/
                 dmx.success();
            } catch (Exception ex) {
                 log.warning(ex.getMessage());

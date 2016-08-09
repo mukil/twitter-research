@@ -3,22 +3,25 @@ package org.deepamehta.plugins.twitter.migrations;
 import de.deepamehta.core.Topic;
 import de.deepamehta.core.TopicType;
 import de.deepamehta.core.model.*;
+import de.deepamehta.core.service.Inject;
 import de.deepamehta.core.service.Migration;
+import de.deepamehta.workspaces.WorkspacesService;
 import java.util.logging.Logger;
 
 
 /**
  * A very basic client for researching the public Twitter Search API v1.1 with DeepaMehta 4.
  *
- * @version 1.3.3-SNAPSHOT
+ * @version 1.3.4-SNAPSHOT
  * @author Malte Reißig (<malte@mikromedia.de>)
  * @website https://github.com/mukil/twitter-research
  *
  */
-
 public class Migration2 extends Migration {
 
     private Logger logger = Logger.getLogger(getClass().getName());
+
+    @Inject private WorkspacesService wsService = null;
 
     private final static String TWEET_URI = "org.deepamehta.twitter.tweet";
     private final static String TWEET_ID_URI = "org.deepamehta.twitter.tweet_id";
@@ -64,84 +67,81 @@ public class Migration2 extends Migration {
     public void run() {
 
         // 1) create "Twitter Research"-Workspace
-        TopicModel workspace = new TopicModel(WS_WEB_RESEARCH_URI, "dm4.workspaces.workspace");
-        Topic ws = dms.createTopic(workspace);
+        TopicModel workspace = mf.newTopicModel(WS_WEB_RESEARCH_URI, "dm4.workspaces.workspace");
+        Topic ws = dm4.createTopic(workspace);
         ws.setSimpleValue("Twitter Research");
         // 2) assign "admin" username to "Twitter Research"-Workspace
-        Topic administrator = dms.getTopic(DEEPAMEHTA_USERNAME_URI, new SimpleValue("admin"));
-        assignWorkspace(administrator);
+        Topic administrator = dm4.getTopicByValue(DEEPAMEHTA_USERNAME_URI, new SimpleValue("admin"));
+        assignToWorkspace(administrator);
         // 3) assign all types to our new workspace
-        TopicType twitterSearchType = dms.getTopicType(TWITTER_SEARCH_URI);
-        TopicType searchLang = dms.getTopicType(TWITTER_SEARCH_LANG_URI);
-        TopicType searchLocation = dms.getTopicType(TWITTER_SEARCH_LOCATION_URI);
-        TopicType searchType = dms.getTopicType(TWITTER_SEARCH_TYPE_URI);
-        TopicType searchNextPage = dms.getTopicType(TWITTER_SEARCH_NEXT_PAGE_URI);
-        TopicType searchRefresh = dms.getTopicType(TWITTER_SEARCH_REFRESH_URL_URI);
-        TopicType searchLastId = dms.getTopicType(TWITTER_SEARCH_MAX_TWEET_URI);
-        TopicType searchResultSize = dms.getTopicType(TWITTER_SEARCH_RESULT_SIZE_URI);
-        TopicType searchTime = dms.getTopicType(TWITTER_SEARCH_TIME_URI);
+        TopicType twitterSearchType = dm4.getTopicType(TWITTER_SEARCH_URI);
+        TopicType searchLang = dm4.getTopicType(TWITTER_SEARCH_LANG_URI);
+        TopicType searchLocation = dm4.getTopicType(TWITTER_SEARCH_LOCATION_URI);
+        TopicType searchType = dm4.getTopicType(TWITTER_SEARCH_TYPE_URI);
+        TopicType searchNextPage = dm4.getTopicType(TWITTER_SEARCH_NEXT_PAGE_URI);
+        TopicType searchRefresh = dm4.getTopicType(TWITTER_SEARCH_REFRESH_URL_URI);
+        TopicType searchLastId = dm4.getTopicType(TWITTER_SEARCH_MAX_TWEET_URI);
+        TopicType searchResultSize = dm4.getTopicType(TWITTER_SEARCH_RESULT_SIZE_URI);
+        TopicType searchTime = dm4.getTopicType(TWITTER_SEARCH_TIME_URI);
         //
-        TopicType user = dms.getTopicType(TWITTER_USER_URI);
-        TopicType userId = dms.getTopicType(TWITTER_USER_ID_URI);
-        TopicType userName = dms.getTopicType(TWITTER_USER_NAME_URI);
-        TopicType userImageUrl = dms.getTopicType(TWITTER_USER_IMAGE_URI);
+        TopicType user = dm4.getTopicType(TWITTER_USER_URI);
+        TopicType userId = dm4.getTopicType(TWITTER_USER_ID_URI);
+        TopicType userName = dm4.getTopicType(TWITTER_USER_NAME_URI);
+        TopicType userImageUrl = dm4.getTopicType(TWITTER_USER_IMAGE_URI);
         //
-        TopicType tweet = dms.getTopicType(TWEET_URI);
-        TopicType tweetId = dms.getTopicType(TWEET_ID_URI);
-        TopicType tweetContent = dms.getTopicType(TWEET_CONTENT_URI);
-        TopicType tweetTimestamp = dms.getTopicType(TWEET_TIME_URI);
-        TopicType tweetEntities = dms.getTopicType(TWEET_ENTITIES_URI);
-        TopicType tweetMetadata = dms.getTopicType(TWEET_METADADA_URI);
-        TopicType tweetSourceButton = dms.getTopicType(TWEET_SOURCE_BUTTON_URI);
-        TopicType tweetLocation = dms.getTopicType(TWEET_LOCATION_URI);
-        TopicType tweetFavouriteCount = dms.getTopicType(TWEET_FAVOURITE_COUNT_URI);
-        TopicType tweetWithheldCopy = dms.getTopicType(TWEET_WITHHELD_DMCA_URI);
-        TopicType tweetWithheldIn = dms.getTopicType(TWEET_WITHHELD_IN_URI);
-        TopicType tweetWithheldScope = dms.getTopicType(TWEET_WITHHELD_SCOPE_URI);
-        TopicType tweetedToStatusId = dms.getTopicType(TWEETED_TO_STATUS_ID);
+        TopicType tweet = dm4.getTopicType(TWEET_URI);
+        TopicType tweetId = dm4.getTopicType(TWEET_ID_URI);
+        TopicType tweetContent = dm4.getTopicType(TWEET_CONTENT_URI);
+        TopicType tweetTimestamp = dm4.getTopicType(TWEET_TIME_URI);
+        TopicType tweetEntities = dm4.getTopicType(TWEET_ENTITIES_URI);
+        TopicType tweetMetadata = dm4.getTopicType(TWEET_METADADA_URI);
+        TopicType tweetSourceButton = dm4.getTopicType(TWEET_SOURCE_BUTTON_URI);
+        TopicType tweetLocation = dm4.getTopicType(TWEET_LOCATION_URI);
+        TopicType tweetFavouriteCount = dm4.getTopicType(TWEET_FAVOURITE_COUNT_URI);
+        TopicType tweetWithheldCopy = dm4.getTopicType(TWEET_WITHHELD_DMCA_URI);
+        TopicType tweetWithheldIn = dm4.getTopicType(TWEET_WITHHELD_IN_URI);
+        TopicType tweetWithheldScope = dm4.getTopicType(TWEET_WITHHELD_SCOPE_URI);
+        TopicType tweetedToStatusId = dm4.getTopicType(TWEETED_TO_STATUS_ID);
         //
-        assignWorkspace(twitterSearchType);
-        assignWorkspace(searchLang);
-        assignWorkspace(searchLocation);
-        assignWorkspace(searchType);
-        assignWorkspace(searchNextPage);
-        assignWorkspace(searchRefresh);
-        assignWorkspace(searchLastId);
-        assignWorkspace(searchResultSize);
-        assignWorkspace(searchTime);
+        assignToWorkspace(twitterSearchType);
+        assignToWorkspace(searchLang);
+        assignToWorkspace(searchLocation);
+        assignToWorkspace(searchType);
+        assignToWorkspace(searchNextPage);
+        assignToWorkspace(searchRefresh);
+        assignToWorkspace(searchLastId);
+        assignToWorkspace(searchResultSize);
+        assignToWorkspace(searchTime);
         //
-        assignWorkspace(user);
-        assignWorkspace(userId);
-        assignWorkspace(userName);
-        assignWorkspace(userImageUrl);
+        assignToWorkspace(user);
+        assignToWorkspace(userId);
+        assignToWorkspace(userName);
+        assignToWorkspace(userImageUrl);
         //
-        assignWorkspace(tweet);
-        assignWorkspace(tweetId);
-        assignWorkspace(tweetContent);
-        assignWorkspace(tweetTimestamp);
-        assignWorkspace(tweetEntities);
-        assignWorkspace(tweetSourceButton);
-        assignWorkspace(tweetMetadata);
-        assignWorkspace(tweetLocation);
-        assignWorkspace(tweetFavouriteCount);
-        assignWorkspace(tweetWithheldCopy);
-        assignWorkspace(tweetWithheldScope);
-        assignWorkspace(tweetWithheldIn);
-        assignWorkspace(tweetedToStatusId);
+        assignToWorkspace(tweet);
+        assignToWorkspace(tweetId);
+        assignToWorkspace(tweetContent);
+        assignToWorkspace(tweetTimestamp);
+        assignToWorkspace(tweetEntities);
+        assignToWorkspace(tweetSourceButton);
+        assignToWorkspace(tweetMetadata);
+        assignToWorkspace(tweetLocation);
+        assignToWorkspace(tweetFavouriteCount);
+        assignToWorkspace(tweetWithheldCopy);
+        assignToWorkspace(tweetWithheldScope);
+        assignToWorkspace(tweetWithheldIn);
+        assignToWorkspace(tweetedToStatusId);
         // 4) Model "Geo Coordinate" to "Tweet"
-        TopicType tweet_type = dms.getTopicType(TWEET_URI);
-        tweet_type.addAssocDef(new AssociationDefinitionModel(
+        TopicType tweet_type = dm4.getTopicType(TWEET_URI);
+        tweet_type.addAssocDef(mf.newAssociationDefinitionModel(
                 COMPOSITION_DEF_EDGE_TYPE, TWEET_URI, GEO_COORDINATE_URI, "dm4.core.one", "dm4.core.one"));
     }
 
     // === Workspace ===
 
-    private void assignWorkspace(Topic topic) {
-        Topic defaultWorkspace = dms.getTopic("uri", new SimpleValue(WS_WEB_RESEARCH_URI));
-        dms.createAssociation(new AssociationModel("dm4.core.aggregation",
-            new TopicRoleModel(topic.getId(), "dm4.core.parent"),
-            new TopicRoleModel(defaultWorkspace.getId(), "dm4.core.child")
-        ));
+    private void assignToWorkspace(Topic topic) {
+        Topic twitterWorkspace = dm4.getTopicByUri(WS_WEB_RESEARCH_URI);
+        wsService.assignToWorkspace(topic, twitterWorkspace.getId());
     }
 
 }

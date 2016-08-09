@@ -1,18 +1,17 @@
-package org.deepamehta.plugins.twitter.service;
+package org.deepamehta.plugins.twitter;
 
 import de.deepamehta.core.Topic;
-import de.deepamehta.core.service.PluginService;
 
 /**
  * A very basic client for researching the public Twitter Search API v1.1 with DeepaMehta 4.
  *
  * @author Malte Reißig (<malte@mikromedia.de>)
- * @version 1.3.3-SNAPSHOT
+ * @version 1.3.4-SNAPSHOT
  * @website https://github.com/mukil/twitter-research
  *
  */
 
-public interface TwitterService extends PluginService {
+public interface TwitterService {
 
     Topic searchPublicTweets(long searchTopicId, String query, String resultType,
             String lang, String location);
