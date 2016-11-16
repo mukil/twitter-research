@@ -1,4 +1,4 @@
-package org.deepamehta.plugins.twitter;
+package org.deepamehta.twitter;
 
 import de.deepamehta.core.Topic;
 

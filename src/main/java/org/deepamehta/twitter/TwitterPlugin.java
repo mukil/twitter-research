@@ -1,4 +1,4 @@
-package org.deepamehta.plugins.twitter;
+package org.deepamehta.twitter;
 
 import com.sun.jersey.core.util.Base64;
 import de.deepamehta.accesscontrol.AccessControlService;

@@ -4,9 +4,9 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <name>DeepaMehta 4 Twitter Research</name>
+    <name>DeepaMehta 4 Twitter Search</name>
     <groupId>org.deepamehta</groupId>
-    <artifactId>dm48-twitter-research</artifactId>
+    <artifactId>dm48-twitter-search</artifactId>
     <version>1.3.4-SNAPSHOT</version>
     <packaging>bundle</packaging>
 
@@ -37,6 +37,14 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.9.1</version>
+                <configuration>
+                    <failOnError>false</failOnError>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
                 <configuration>
@@ -45,7 +53,7 @@
                             org.deepamehta.twitter-research
                         </Bundle-SymbolicName>
                         <Bundle-Activator>
-                            org.deepamehta.plugins.twitter.TwitterPlugin
+                            org.deepamehta.twitter.TwitterPlugin
                         </Bundle-Activator>
                     </instructions>
                 </configuration>

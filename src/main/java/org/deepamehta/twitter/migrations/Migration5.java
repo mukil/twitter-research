@@ -1,4 +1,4 @@
-package org.deepamehta.plugins.twitter.migrations;
+package org.deepamehta.twitter;
 
 import de.deepamehta.accesscontrol.AccessControlService;
 import de.deepamehta.core.Topic;
