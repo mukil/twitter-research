@@ -53,7 +53,7 @@
 
         // configure menu and type commands
         dm4c.add_listener('topic_commands', function (topic) {
-            if (!dm4c.has_create_permission('org.deepamehta.twitter.search')) {
+            if (!dm4c.has_create_permission_for_topic_type('org.deepamehta.twitter.search')) {
                 return
             }
             var commands = []
