@@ -1,23 +1,31 @@
-package org.deepamehta.twitter;
+package org.deepamehta.twitter.migrations;
 
+import de.deepamehta.accesscontrol.AccessControlService;
+import de.deepamehta.core.Topic;
+import de.deepamehta.core.TopicType;
+import de.deepamehta.core.service.Inject;
 import de.deepamehta.core.service.Migration;
+import de.deepamehta.workspaces.WorkspacesService;
+import org.deepamehta.twitter.TwitterService;
 
 /** 
- * This migration changes the Workspace name to "Twitter" and its uri to be simply
- * "org.deepamehta.workspaces.twitter".
+ * Migrate Twitter API settings topics into the (as of DM 4.8 new) "Administration" workspace.
  */
 public class Migration4 extends Migration {
 
+    @Inject private WorkspacesService wsService = null;
+
     @Override
     public void run() {
-
-        // 1) Configure new user profile icon 
-        dm4.getTopicType("org.deepamehta.twitter.user").getViewConfig().addSetting("dm4.webclient.view_config",
-                "dm4.webclient.icon", "/org.deepamehta.twitter-research/images/profile_twitter-32-42.png");
-        // 2) Configure new search bucket icon
-        dm4.getTopicType("org.deepamehta.twitter.search").getViewConfig().addSetting("dm4.webclient.view_config",
-                "dm4.webclient.icon", "/org.deepamehta.twitter-research/images/search_twitter-32.png");
-
+        Topic administrationWs = dm4.getTopicByUri(AccessControlService.ADMINISTRATION_WORKSPACE_URI);
+        TopicType keyType = dm4.getTopicType(TwitterService.TWITTER_KEY);
+        wsService.assignToWorkspace(keyType, administrationWs.getId());
+        TopicType secretType = dm4.getTopicType(TwitterService.TWITTER_SECRET);
+        wsService.assignToWorkspace(secretType, administrationWs.getId());
+        Topic applicationKey = dm4.getTopicByUri(TwitterService.TWITTER_KEY);
+        wsService.assignToWorkspace(applicationKey, administrationWs.getId());
+        Topic appSecret = dm4.getTopicByUri(TwitterService.TWITTER_APPLICATION_SECRET);
+        wsService.assignToWorkspace(appSecret, administrationWs.getId());
     }
 
 }

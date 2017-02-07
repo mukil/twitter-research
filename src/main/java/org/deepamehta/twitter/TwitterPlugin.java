@@ -46,55 +46,6 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
 
     private Logger log = Logger.getLogger(getClass().getName());
 
-    private final String DEEPAMEHTA_VERSION = "DeepaMehta 4.4";
-    private final String TWITTER_RESEARCH_VERSION = "1.3.3-SNAPSHOT";
-    private final String CHARSET = "UTF-8";
-    private final String TWITTER_WORKSPACE_URI = "org.deepamehta.workspaces.twitter";
-
-    private final static String CHILD_URI = "dm4.core.child";
-    private final static String PARENT_URI = "dm4.core.parent";
-    private final static String AGGREGATION = "dm4.core.aggregation";
-    private final static String COMPOSITION = "dm4.core.composition";
-
-    private final static String TWEET_URI = "org.deepamehta.twitter.tweet";
-    private final static String TWEET_ID_URI = "org.deepamehta.twitter.tweet_id";
-    private final static String TWEET_TIME_URI = "org.deepamehta.twitter.tweet_time";
-    private final static String TWEET_CONTENT_URI = "org.deepamehta.twitter.tweet_content";
-    private final static String TWEET_ENTITIES_URI = "org.deepamehta.twitter.tweet_entities";
-    private final static String TWEET_METADATA_URI = "org.deepamehta.twitter.tweet_metadata";
-    private final static String TWEET_SOURCE_BUTTON_URI = "org.deepamehta.twitter.tweet_source_button";
-    private final static String TWEET_LOCATION_URI = "org.deepamehta.twitter.tweet_location";
-    private final static String TWEET_FAVOURITE_COUNT_URI = "org.deepamehta.twitter.tweet_favourite_count";
-    private final static String TWEET_WITHHELD_DMCA_URI = "org.deepamehta.twitter.tweet_withheld_copyright";
-    private final static String TWEET_WITHHELD_IN_URI = "org.deepamehta.twitter.tweet_withheld_in";
-    private final static String TWEET_WITHHELD_SCOPE_URI = "org.deepamehta.twitter.tweet_withheld_scope";
-    private final static String TWEETED_TO_STATUS_ID = "org.deepamehta.twitter.tweeted_to_status_id";
-
-    private final static String TWITTER_USER_URI = "org.deepamehta.twitter.user";
-    private final static String TWITTER_USER_ID_URI = "org.deepamehta.twitter.user_id";
-    private final static String TWITTER_USER_NAME_URI = "org.deepamehta.twitter.user_name";
-    private final static String TWITTER_USER_IMAGE_URI = "org.deepamehta.twitter.user_image_url";
-
-    private final static String TWITTER_SEARCH_URI = "org.deepamehta.twitter.search";
-    private final static String TWITTER_SEARCH_LANG_URI = "org.deepamehta.twitter.search_language";
-    private final static String TWITTER_SEARCH_LOCATION_URI = "org.deepamehta.twitter.search_location";
-    private final static String TWITTER_SEARCH_TYPE_URI = "org.deepamehta.twitter.search_result_type";
-    private final static String TWITTER_SEARCH_NEXT_PAGE_URI = "org.deepamehta.twitter.search_next_page";
-    private final static String TWITTER_SEARCH_REFRESH_URL_URI = "org.deepamehta.twitter.search_refresh_url";
-    private final static String TWITTER_SEARCH_MAX_TWEET_URI = "org.deepamehta.twitter.search_last_tweet_id";
-    private final static String TWITTER_SEARCH_RESULT_SIZE_URI = "org.deepamehta.twitter.search_result_size";
-    private final static String TWITTER_SEARCH_TIME_URI = "org.deepamehta.twitter.last_search_time";
-
-    private final static String TWITTER_AUTHENTICATION_URL = "https://api.twitter.com/oauth2/token";
-    private final static String TWITTER_SEARCH_BASE_URL = "https://api.twitter.com/1.1/search/tweets.json";
-    
-    private final static String TWITTER_APPLICATION_KEY = "org.deepamehta.twitter.application_key";
-    private final static String TWITTER_APPLICATION_SECRET = "org.deepamehta.twitter.application_secret";
-
-    private final String GEO_COORDINATE_TOPIC_URI = "dm4.geomaps.geo_coordinate";
-    private final String GEO_LONGITUDE_TYPE_URI = "dm4.geomaps.longitude";
-    private final String GEO_LATITUDE_TYPE_URI = "dm4.geomaps.latitude";
-
     private boolean isInitialized = false;
     private boolean isAuthorized = false;
     private String bearerToken = null;
@@ -117,7 +68,7 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
     }
 
     private void authorizeSearchRequests () throws TwitterAPIException {
-        Topic applicationKey  = dm4.getTopicByUri(TWITTER_APPLICATION_KEY);
+        Topic applicationKey  = dm4.getTopicByUri(TWITTER_KEY);
         Topic applicationSecret  = dm4.getTopicByUri(TWITTER_APPLICATION_SECRET);
         try {
             StringBuilder resultBody = new StringBuilder();
