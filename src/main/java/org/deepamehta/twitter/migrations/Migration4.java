@@ -22,7 +22,7 @@ public class Migration4 extends Migration {
         wsService.assignToWorkspace(keyType, administrationWs.getId());
         TopicType secretType = dm4.getTopicType(TwitterService.TWITTER_SECRET);
         wsService.assignToWorkspace(secretType, administrationWs.getId());
-        Topic applicationKey = dm4.getTopicByUri(TwitterService.TWITTER_KEY);
+        Topic applicationKey = dm4.getTopicByUri(TwitterService.TWITTER_APPLICATION_KEY);
         wsService.assignToWorkspace(applicationKey, administrationWs.getId());
         Topic appSecret = dm4.getTopicByUri(TwitterService.TWITTER_APPLICATION_SECRET);
         wsService.assignToWorkspace(appSecret, administrationWs.getId());

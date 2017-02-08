@@ -74,22 +74,23 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
             StringBuilder resultBody = new StringBuilder();
             URL requestUri = new URL(TWITTER_AUTHENTICATION_URL);
             //
-            String key = URLEncoder.encode(applicationKey.getSimpleValue().toString(), CHARSET);
-            String secret = URLEncoder.encode(applicationSecret.getSimpleValue().toString(), CHARSET);
+            String key = applicationKey.getSimpleValue().toString();
+            String secret = applicationSecret.getSimpleValue().toString();
             // get base64 encoded secrets
             if (key.isEmpty() || secret.isEmpty()) {
-                throw new TwitterAPIException("Bad Twitter secrets, please register your application.",
-                        Status.UNAUTHORIZED);
+                throw new TwitterAPIException("Bad Twitter secrets, please register your application"
+                    + " before using it at twitter.com.", Status.UNAUTHORIZED);
             }
             String values =  key + ":" + secret;
             String credentials = new String(Base64.encode(values));
+            log.info("Twitter API OAuth Token Authorization: " + credentials);
             // initiate request
             HttpURLConnection connection = (HttpURLConnection) requestUri.openConnection();
             connection.setDoOutput(true);
             connection.setDoInput(true);
             connection.setRequestMethod("POST");
             connection.setRequestProperty("User-Agent", "DeepaMehta "+DEEPAMEHTA_VERSION+" - "
-                    + "Twitter Research " + TWITTER_RESEARCH_VERSION);
+                    + "Twitter Search " + TWITTER_RESEARCH_VERSION);
             connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded;charset=" + CHARSET);
             connection.setRequestProperty("Authorization", "Basic " + credentials);
             //
@@ -99,29 +100,30 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
             writer.flush();
             //
             int httpStatusCode = connection.getResponseCode();
-            if (httpStatusCode != HttpURLConnection.HTTP_OK) {
-                throw new TwitterAPIException("Error with HTTPConnection.", Status.INTERNAL_SERVER_ERROR);
-            }
-            // read in the response
-            BufferedReader rd = new BufferedReader(new InputStreamReader(connection.getInputStream(), CHARSET));
-            for (String input; (input = rd.readLine()) != null;) {
-                resultBody.append(input);
-            }
-            rd.close();
-            writer.close();
-            // TODO: Check if answer is something like "403: Too many requests"
-            if (resultBody.toString().isEmpty()) {
-                throw new TwitterAPIException("Twitter just handed us an empty response ("+httpStatusCode+")",
+            switch (httpStatusCode) {
+                case HttpURLConnection.HTTP_OK:
+                    // read in the response
+                    BufferedReader rd = new BufferedReader(new InputStreamReader(connection.getInputStream(), CHARSET));
+                    for (String input; (input = rd.readLine()) != null;) {
+                        resultBody.append(input);
+                    }   rd.close();
+                    writer.close();
+                    break;
+                case HttpURLConnection.HTTP_NO_CONTENT:
+                    log.info("Twitter API Response: " + httpStatusCode);
+                    throw new TwitterAPIException("Twitter just handed us an empty response ("+httpStatusCode+")",
                         Status.NO_CONTENT);
+                default:
+                    throw new TwitterAPIException("Error with HTTPConnection during authorization, HTTP Status: " + httpStatusCode, Status.INTERNAL_SERVER_ERROR);
             }
             //
             JSONObject response = new JSONObject(resultBody.toString());
             bearerToken = response.getString("access_token");
             isAuthorized = true;
         } catch (JSONException ex) {
-            throw new RuntimeException("Internal Server Error while parsing response " + ex.getMessage());
+            throw new RuntimeException("Internal Server Error while parsing response", ex);
         } catch (IOException ex) {
-            throw new RuntimeException("Internal Server Error HTTP I/O Error " + ex.getMessage());
+            throw new RuntimeException("Internal Server Error HTTP I/O Error", ex);
         }
     }
 
@@ -148,11 +150,13 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
         try {
             // 0) Authorize request
             if (!isAuthorized) {
+                log.info("Authorizing search request...");
                 authorizeSearchRequests();
                 if (!isAuthorized) {  // check if authorization was sucessfull
                     throw new WebApplicationException(new Throwable("Bad Twitter Secrets. "
                         + "Consider to register your application at https://dev.twitter.com/apps/new."), 500);
                 }
+                log.info("Search request authorized...");
             }
             log.fine("Researching tweets for Twitter-Search (" +query.getId()+ ") next ? " + nextPage);
             // 1) loading search configuration
@@ -178,8 +182,8 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
             // 3) check the response
             int httpStatusCode = connection.getResponseCode();
             if (httpStatusCode != HttpURLConnection.HTTP_OK) {
-                throw new WebApplicationException(new Throwable("Error with HTTPConnection."),
-                        Status.INTERNAL_SERVER_ERROR);
+                log.info("HTTP Status Code: " + httpStatusCode);
+                throw new RuntimeException("Error with HTTPConnection: " + httpStatusCode);
             }
             // 4) read in the response
             BufferedReader rd = new BufferedReader(new InputStreamReader(connection.getInputStream(), CHARSET));
@@ -304,16 +308,11 @@ public class TwitterPlugin extends PluginActivator implements TwitterService {
                 if (user.has("name")) userName = user.getString("name");
                 if (user.has("id_str")) twitterUserId = user.getString("id_str");
                 if (user.has("profile_image_url")) profileImageUrl = user.getString("profile_image_url");
-
                 Topic twitterUser = getTwitterUser(twitterUserId, userName, profileImageUrl);
                 // gets an existing or creates a new "Tweet"-Topic
                 Topic tweet = getTweet(item, twitterUser.getId());
                 // associate "Tweet" with "Twitter User" fixme: check if there's already an association
                 twitterSearch.setChildTopics(mf.newChildTopicsModel().addRef(TWEET_URI, tweet.getId()));
-                // old style association
-                /* dm4.createAssociation(new AssociationModel(SEARCH_RESULT,
-                        new TopicRoleModel(searchId, DEFAULT_URI),
-                        new TopicRoleModel(tweet.getId(), DEFAULT_URI)), clientState); **/
             }
 
             // get current (overall) result size

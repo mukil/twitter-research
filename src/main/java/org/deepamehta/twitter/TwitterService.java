@@ -17,8 +17,11 @@ public interface TwitterService {
     public final String TWITTER_RESEARCH_VERSION = "1.3.4-SNAPSHOT";
     public final String CHARSET = "UTF-8";
 
-    public final String WS_WEB_RESEARCH_URI = "org.deepamehta.workspaces.twitter_search";
-    public final String WS_WEB_RESEARCH_NAME = "Twitter Search";
+    public final static String TWITTER_AUTHENTICATION_URL = "https://api.twitter.com/oauth2/token";
+    public final static String TWITTER_SEARCH_BASE_URL = "https://api.twitter.com/1.1/search/tweets.json";
+
+    public final String WS_WEB_RESEARCH_URI = "org.deepamehta.workspaces.twitter";
+    public final String WS_WEB_RESEARCH_NAME = "Twitter";
 
     public final String COMPOSITION_DEF_EDGE_TYPE = "dm4.core.composition_def";
     public final String ROLE_PARENT_TYPE_URI = "dm4.core.parent_type";
@@ -58,9 +61,6 @@ public interface TwitterService {
     public final static String TWITTER_SEARCH_MAX_TWEET_URI = "org.deepamehta.twitter.search_last_tweet_id";
     public final static String TWITTER_SEARCH_RESULT_SIZE_URI = "org.deepamehta.twitter.search_result_size";
     public final static String TWITTER_SEARCH_TIME_URI = "org.deepamehta.twitter.last_search_time";
-
-    public final static String TWITTER_AUTHENTICATION_URL = "https://api.twitter.com/oauth2/token";
-    public final static String TWITTER_SEARCH_BASE_URL = "https://api.twitter.com/1.1/search/tweets.json";
 
     public final static String TWITTER_KEY = "org.deepamehta.twitter.key";
     public final static String TWITTER_SECRET = "org.deepamehta.twitter.secret";
